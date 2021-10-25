@@ -16,12 +16,12 @@
     - [Hellwig and Nehrdich, 2018] Character-level Recurrent and Convolutional Neural Networks, disregard the difference between splitting joint words and compounds, does not require feature engineering or external linguistic resources, claims to work well with just the parallel versions of raw and segmented text.
     - [Krishna et al., 2018] a structured prediction framework using EBM (energy based model), solves word segmentation AND morphological tagging tasks, graph-based parsing techniques. 
 
+- [A. S. R and A. Kulkarni, 2014] [Segmentation of Navya-Nya ̄ya Expressions](https://aclanthology.org/W14-5141/)
 - [Krishna et al., 2016] [Word Segmentation in Sanskrit Using Path Constrained Random Walks](https://aclanthology.org/C16-1048/)
 - [Aralikatte et al., 2018] [Sanskrit Sandhi Splitting using seq2(seq)^2](https://aclanthology.org/D18-1530/)
 - [Hellwig and Nehrdich, 2018] [Sanskrit Word Segmentation Using Character-level Recurrent and Convolutional Neural Networks](https://aclanthology.org/D18-1295/)
 - [Krishna et al., 2018] [Free as in Free Word Order: An Energy Based Model for Word Segmentation and Morphological Tagging in Sanskrit](https://aclanthology.org/D18-1276/)
-- [A. S. R and A. Kulkarni] [Segmentation of Navya-Nya ̄ya Expressions](https://aclanthology.org/W14-5141/)
-- [S. Dave et al.] [Neural Compound-Word (Sandhi) Generation and Splitting in Sanskrit Language](https://dl.acm.org/doi/10.1145/3430984.3431025)
+- [S. Dave et al., 2021] [Neural Compound-Word (Sandhi) Generation and Splitting in Sanskrit Language](https://dl.acm.org/doi/10.1145/3430984.3431025)
 
 ## Other
 - [A. Kulkarni, 2013] [A Deterministic Dependency Parser with Dynamic Programming for Sanskrit](https://aclanthology.org/W13-3718/)
