@@ -23,7 +23,7 @@
   - Datasets: [UoH corpus](http://sanskrit.uohyd.ac.in/Corpus/) + [SandhiKosh corpus](https://github.com/sanskrit-sandhi/SandhiKosh) (Shubham Bhardwaj, 2018), pruned against Monier-Williams Dictionary
   - Double-Decoder RNN model with attention (*location decoder* predicts split locations, *character decoder* generates split words, trained separately)
 - [Hellwig and Nehrdich, 2018] [Sanskrit Word Segmentation Using Character-level Recurrent and Convolutional Neural Networks](https://aclanthology.org/D18-1295/)
-  - [new dataset](https://github.com/OliverHellwig/sanskrit/papers/2018emnlp) published, more than 560,000 sentences with manually validated splits from the Digital Corpus of Sanskrit (DCS)
+  - [new dataset](https://github.com/OliverHellwig/sanskrit/tree/master/papers/2018emnlp) published, more than 560,000 sentences with manually validated splits from the Digital Corpus of Sanskrit (DCS)
   - defined the SWS task (Sanskrit word splitting), does not differentiate between compound and inter-word splits
   - identifies the problem of compositional vs. non-compositional readings of compounds, which is also debatable among human annotators
   - future direction: a joint model for learning splits as well as lexical and morphological annotations---"We hypothesize that CTC ([Graves, 2012](https://www.cs.toronto.edu/~graves/preprint.pdf)) trained as a co-task or segmental NNs ([Lu et al., 2016](https://arxiv.org/abs/1603.00223)) with a modified objective (including split probabilities) may be suitable for this task."
