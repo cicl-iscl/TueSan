@@ -40,7 +40,7 @@
  - What we actually need to disambiguate the non-deterministic solutions is the *position* where sandhi occurs.
  - How do we learn the positions?
  - We can see a joint chunk/sentence as consecutive fuzzy words with head and tails waiting for specification. This would require we have some kind of lexicon and recognise the fuzzy words before we do anything else. This is essentially what the Double Decoder RNN was doing, learning the positions of splits.
- - We should also have an acoustic model that either minimise the effort of pronuncing a joint word, or maximise the conditional probability of the output segment given the input sentence.
- - Refer to the paper mentioned by Hellwig, *Segmental RNNs for acoustic modelling*
+ - We should also have an acoustic model that either minimise the effort of pronouncing a joint word (define objective), or maximise the conditional probability of the output segment given the input sentence.
+ - Refer to the paper mentioned by Hellwig, *Segmental RNNs for acoustic modelling*.
  
  
