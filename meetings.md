@@ -30,7 +30,17 @@
  - Determining word boundaries is not a trivial task.
  - *Can it be considered as a speech to text problem? Or use algorithms for speech recognition?*
  
- - Let `*P*` be the set of phonemes, and `*R*` the set of rules. And we define a mapping `*s*: *P* x *P* -> *P*`. 
- - The mapping `s` (sandhi) can be seen as "choosing to apply a rule `r` in `R` given `word-final *p1*` and `word-initial *p2*` to get `*p3*`", since the application of sandhi rules is deterministic.
+ - Let *`P`* be the set of phonemes, and *`R`* the set of rules. And we define a mapping *`s: P x P -> P`*. 
+ - The mapping `s` (sandhi) can be seen as "choosing to apply a rule `r` in *`R`* given `word-final p1` and `word-initial p2` to get `p3`", since the application of sandhi rules is deterministic.
+ - *Can we reformulate the euphonic assimilation process as a transformation that acts on the embeddings of `p1` and `p2` and try to solve for `s` given the embedding of `p3`?*
+ - character-based or syllable-based?
+ - But the inverse is non-deterministic, for example, the long vowel `A` can be separated in a least two ways: `-a + a-` and `-A + A-`.
+ - It seems that we need extra information to make a decision! What do we need?
+ - It seem that we should know which words to join, but we don't actually need the morphological/lexical information of the words, because the euphonic process operates on its own, the only basis is the proximity of sounds.
+ - What we actually need to disambiguate the non-deterministic solutions is the *position* where sandhi occurs.
+ - How do we learn the positions?
+ - We can see a joint chunk/sentence as consecutive fuzzy words with head and tails waiting for specification. This would require we have some kind of lexicon and recognise the fuzzy words before we do anything else. This is essentially what the Double Decoder RNN was doing, learning the positions of splits.
+ - We should also have an acoustic model that either minimise the effort of pronuncing a joint word, or maximise the conditional probability of the output segment given the input sentence.
+ - Refer to the paper mentioned by Hellwig, *Segmental RNNs for acoustic modelling*
  
  
