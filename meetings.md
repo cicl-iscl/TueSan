@@ -1,3 +1,85 @@
+# 1029
+----
+### Sandhi rules grouped by reverse operation
+| Operation        |Source         | Target | Description |
+| -----------------|:-------------:| :------:|:-----------|
+|||||
+|**vowels**||||
+|||||
+|resolve long vowel|-ā/ī/ū-|-a/i/u + a/i/u-|simple vowel with simple vowel of the same kind (long/short)|
+|resolve long vowel|-ā/ī/ū-|-ā/ī/ū + ā/ī/ū-|simple vowel with simple vowel of the same kind (long/short)|
+|resolve long vowel|-ā/ī/ū-|-a/i/u + ā/ī/ū-|simple vowel with simple vowel of the same kind (long/short)|
+|resolve long vowel|-ā/ī/ū-|-ā/ī/ū + a/i/u-|simple vowel with simple vowel of the same kind (long/short)|
+|||||
+|resolve long vowel exception|amī, ī(Interjection), als Dualendung, "jene"|keep separate||
+|||||
+|resolve Hochstufe|-e/o/ar/al-|-a/ā + i/u/ṛ/ḷ-|a/ā simple vowel with simple vowel of other kinds (long/short)-->eine Stufe hoch|
+|resolve Dehnstufe|-ai/au/ār/āl-|-a/ā + e/o/ar/al-|a/ā simple vowel with dipthongs of other kinds-->zwei Stufen hoch|
+|||||
+|resolve Halbvokal(i-kind)|-y-|-i/ī + non-i-kind-|non-a/ā simple vowel with vowel of different kind -> non-a/ā simple vowel changes to corresponding Halbvokal|
+|resolve Halbvokal(u-kind)|-v-|-u/ū + non-u-kind-|non-a/ā simple vowel with vowel of different kind -> non-a/ā simple vowel changes to corresponding Halbvokal|
+|resolve Halbvokal(ṛ-kind)|-r-|-ṛ/ṝ + non-ṛ-kind-|non-a/ā simple vowel with vowel of different kind -> non-a/ā simple vowel changes to corresponding Halbvokal|
+|resolve Halbvokal(ḷ-kind)|-l-|-ḷ + non-ḷ-kind-|non-a/ā simple vowel with vowel of different kind -> non-a/ā simple vowel changes to corresponding Halbvokal|
+|||||
+|resolve Avagraha|-'-|-e/o + a-|te + api --> te'pi|
+|||||
+|resolve complex a|-a non-a-vowel-|-e/o + non-a-vowel(including ā)-|vane + āste --> vana āste|
+|resolve complex ā|-ā vowel-|-ai + vowel-|tasmai + adāt --> tasmā adāt|
+|resolve complex āv|-āvvowel-|-au + vowel-|tau + ubhau  -> tāvubhau|
+|||||
+|**consonants**||||
+|||||
+|keep visarga|-ḥ unvoiced V/L/Z|-ḥ unvoiced V/L/Z|ḥ remain unchanged before unvoiced velars (k, kh), unvoiced labials (p, ph) and Zischlaute (ṣ, ś, s)|
+|visarga changes|-ś/ṣ/s-|-ḥ unvoiced P/R/D|ḥ changes before unvoiced palatal (ca, cha), unvoiced retroflex (ṭ, ṭh) , unvoiced dental (t, th) into corresponding Zischlaute (ś, ṣ, s)|
+|visarga changes|-r-|-<non-a/ā-vowel>ḥ voiced(except r-)||
+|!|-<non-a/ā-vowel> elongated-r-|-<non-a/ā-vowel>ḥ r-||
+|||||
+||to be continued|||
+|||||
+|||||
+
+### Pausaform
+Max. 1 consonant before space/end of sentence -- "Pausa", with exceptions.
+Types of consonants allowed:
+
+- 1.Group: k, ṅ **velar**
+- 3.Group: ṭ, ṇ **retroflex**
+- 4.Group: t, n **dental**
+- 5.Group: p, m **labial**
+- Visarga: ḥ
+- y, l, v
+
+Other consonants have to transform to one of the above allowed consonants before a pause. 
+
+2. Group **palatal** changes to 1.Group: k, ṅ **velar** respectively (Exception: sometimes j -> ṭ).
+
+ṣ, h --> ṭ or sometimes k.
+
+ś --> k or sometimes ṭ
+
+### External Data
+Possible data augmentation:
+
+[DCS in conllu format](https://github.com/OliverHellwig/sanskrit/tree/master/dcs/data/conllu): Oliver Hellwig: Digital Corpus of Sanskrit (DCS). 2010-2021.
+
+- The train/dev data is also taken from DCS, so I guess we can't use it.
+- I was trying to figure out if the sent_ids are the same, turns out they are not. Can't be used to retrieve correct segmentations.
+- Still, the conllu data can be of some use, although the format is not strictly CoNLL-U, 13 fields instead of 10, had to write a simple parser.
+
+[Sanskrit UD Treebank](https://github.com/UniversalDependencies/UD_Sanskrit-UFAL):
+
+- a very small corpus ~230 sentences, though the text is of similar style. Lemma and form retrievable.
+- could use this as test
+
+#### Graphml
+
+- *color_class*: rough approx. of word category
+- morph: groundtruth analysis
+- *sense*: polysemy
+- stem: groundtruth stem
+- word: word form
+
+
 # 1027
 ----
 
@@ -42,5 +124,8 @@
  - We can see a joint chunk/sentence as consecutive fuzzy words with head and tails waiting for specification. This would require we have some kind of lexicon and recognise the fuzzy words before we do anything else. This is essentially what the Double Decoder RNN was doing, learning the positions of splits.
  - We should also have an acoustic model that either minimise the effort of pronouncing a joint word (define objective), or maximise the conditional probability of the output segment given the input sentence.
  - Refer to the paper mentioned by Hellwig, *Segmental RNNs for acoustic modelling*.
+
+
+
  
  
