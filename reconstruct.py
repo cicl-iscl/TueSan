@@ -54,7 +54,7 @@ def reconstruct_unsandhied(tokens, allowed_words):
 
 def get_next(idx, zipped):
 	next_pred, next_true = '', ''
-	if idx + 1 > len(zipped):
+	if idx + 1 >= len(zipped):
 		logger.warning('end token has error.')
 	else:
 		next_pred, next_true = zipped[idx+1]
