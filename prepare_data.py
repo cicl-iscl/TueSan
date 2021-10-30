@@ -20,7 +20,7 @@ DATA_DIR = Path('sanskrit/')  # relative path to local copy
 # DATA_DIR = Path('/data/jingwen/sanskrit/') # on server
 
 TRAIN_JSON = Path(DATA_DIR, 'wsmp_train.json')
-TRAIN_GRAPHML = Path(DATA_DIR, 'graphml_train', 'final_graphml_train')
+TRAIN_GRAPHML = Path(DATA_DIR, 'final_graphml_train')
 TRAIN_PICKLE = Path('train_dataset.pickle')
 
 def read_json(jsonfile):
