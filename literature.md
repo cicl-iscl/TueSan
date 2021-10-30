@@ -36,3 +36,4 @@
 - [Lu et al., 2016] [Segmental Recurrent Neural Networks for End-to-end Speech Recognition](https://arxiv.org/abs/1603.00223)
 - [G. Inoue et al., 2017] [Joint Prediction of Morphosyntactic Categories for Fine-Grained Arabic Part-of-Speech Tagging Exploiting Tag Dictionary Information](https://aclanthology.org/K17-1042/)
 - [Krishna et al., 2020] [A Graph-Based Framework for Structured Prediction Tasks in Sanskrit](https://aclanthology.org/2020.cl-4.4/)
+- [A.Lamb et al., 2016] [Professor Forcing: A New Algorithm for Training Recurrent Networks](https://arxiv.org/abs/1610.09038)
