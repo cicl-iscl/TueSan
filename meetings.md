@@ -1,3 +1,7 @@
+# 1030
+----
+[Professor Forcing Algorithm (2016)](https://github.com/dennybritz/deeplearning-papernotes/blob/master/notes/professor-forcing.md)
+
 # 1029
 ----
 ### Sandhi rules grouped by reverse operation
