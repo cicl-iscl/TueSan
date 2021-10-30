@@ -8,16 +8,17 @@ To keep us posted of what's been changed and added ;-), and to remind the forget
 - `train_dataset.pickle`: generated using Leander's code for the full training dataset (90 000), saved as pickle for faster loading. Did **NOT** remove punctuation!
 - `logger.py`: configure logger
 - python files which simply move Leander's code from Colab notebooks around
-  - `utils.py`: utilities for accessing data, provided with the task; a helper method to peek into a specific sentence.
-  - `prepare_data.py`: prepares the (training) dataset
-  - `reconstruct.py`: try to reconstruct unsandhied tokens, error analysis
+	- `utils.py`: utilities for accessing data, provided with the task; a helper method to peek into a specific sentence.
+	- `prepare_data.py`: prepares the (training) dataset
+	- `reconstruct.py`: try to reconstruct unsandhied tokens, error analysis
+	- `task1.py`: model
 - description of data folder structure in `README.md`
 - `pyproject.toml` for dependency management (and virtual environment) with poetry
 - `CHANGELOG.md` to keep the changes visible for everyone.
-- 
+
 ### Changed
 - `reconstruct.py`: 
-  - added `'` as a vowel, edit distance to `a` is still 1.
-  - more error types to analyse, added `next token` for easier inspection
+	- added `'` as a vowel, edit distance to `a` is still 1.
+	- more error types to analyse, added `next token` for easier inspection
 - `literature.md` and `meetings.md`: add paper for the Professor Forcing Algorithm
  
