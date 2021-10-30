@@ -14,3 +14,4 @@ Word Segmentation and Morphological Parsing for Sanskrit
       ├── wsmp_train.json
       └── wsmp_dev.json
 ```
+Data can be accessed from `rummelhart` server, `/data/jingwen/sanskrit/`.
