@@ -8,10 +8,9 @@ Word Segmentation and Morphological Parsing for Sanskrit
       ├── graphml_dev
       |   ├── ddd.graphml
       │   └── ...
-      ├── graphml_train
-      │   └── final_graphml_train
-      |       ├── ddd.graphml
-      |       └── ...  
+      ├── final_graphml_train
+      |   ├── ddd.graphml
+      |   └── ...  
       ├── wsmp_train.json
       └── wsmp_dev.json
 ```
