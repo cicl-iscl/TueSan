@@ -4,6 +4,7 @@
 import re
 from pathlib import Path
 from itertools import chain
+import time
 
 import json
 
@@ -11,8 +12,8 @@ from logger import logger
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
-DATA_DIR = Path('sanskrit')
-# DATA_DIR = Path('/data','jingwen', 'sanskrit')  # server
+# DATA_DIR = Path('sanskrit')
+DATA_DIR = Path('/data','jingwen', 'sanskrit')  # server
 DCS_DIR = Path(DATA_DIR, 'conllu', 'files')
 # DCS_TEST = Path(DATA_DIR, 'conllu', 'tests')
 
@@ -207,7 +208,8 @@ def load_conllu_data(jsonfile=DCS_JSON):
 
 
 if __name__ == '__main__':
-
+	s1 = time.time()
 	dataset = load_conllu_data(DCS_JSON)
-	pprint(dataset[-2:])
+	logger.info(f'It took {time.time()-s1:.2f} seconds to load DCS data.')
+	pp.pprint(dataset[-2:])
 
