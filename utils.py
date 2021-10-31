@@ -41,17 +41,22 @@ def unicode_normalize(dict_item):
 	Input:  Dict -> JSON object for a DCS sentence, an element from JSON List
 	Output: Dict -> Same content as the input, but all the unicode strings normalized with NFC
 	"""
-	dict_item["joint_sentence"] = unicodedata.normalize('NFC',dict_item["joint_sentence"])
-	#joint sentence - input for tasks 1 and 3
-	dict_item["segmented_sentence"] = unicodedata.normalize('NFC',dict_item["segmented_sentence"])
-	#segmented sentence - input for task 2
-	dict_item["t1_ground_truth"] = [[unicodedata.normalize('NFC',x) for x in inner]
+	if "joint_sentence" in dict_item.keys():
+		dict_item["joint_sentence"] = unicodedata.normalize('NFC',dict_item["joint_sentence"])
+		# joint sentence - input for tasks 1 and 3
+	if "segmented_sentence" in dict_item.keys():
+		dict_item["segmented_sentence"] = unicodedata.normalize('NFC',dict_item["segmented_sentence"])
+		# segmented sentence - input for task 2
+	if "t1_ground_truth" in dict_item.keys():
+		dict_item["t1_ground_truth"] = [[unicodedata.normalize('NFC',x) for x in inner]
 									for inner in dict_item["t1_ground_truth"]]
-	#ground truth for task 1 - word segmentation
-	dict_item["t2_ground_truth"] = [[unicodedata.normalize('NFC',inner[0]), inner[1]]
+		# ground truth for task 1 - word segmentation
+	if "t2_ground_truth" in dict_item.keys():
+		dict_item["t2_ground_truth"] = [[unicodedata.normalize('NFC',inner[0]), inner[1]]
 									for inner in dict_item["t2_ground_truth"]]
-	#ground truth for task 2 - morphological parsing
-	dict_item["t3_ground_truth"] = [[[unicodedata.normalize('NFC',x[0]),
+	# ground truth for task 2 - morphological parsing
+	if "t3_ground_truth" in dict_item.keys():
+		dict_item["t3_ground_truth"] = [[[unicodedata.normalize('NFC',x[0]),
 									  unicodedata.normalize('NFC',x[1]), x[2]]
 									 for x in inner] for inner in dict_item["t3_ground_truth"] ]
 	#ground truth for task 3 - word segmentation and morphological parsing
@@ -69,10 +74,10 @@ def check_specific_sent(normalised_data, sent_id):
 			logger.debug(entry['joint_sentence'])
 			logger.debug(t1_groundtruth)
 
-			logger.info(entry["graphml_node_ids"])
+			# logger.info(entry["graphml_node_ids"])
 
-			full_nodes = get_all_nodes(sent_id)
-			nodes = get_ground_truth_nodes(entry)
-			logger.debug(pp.pprint(nodes))
+			# full_nodes = get_all_nodes(sent_id)
+			# nodes = get_ground_truth_nodes(entry)
+			# logger.debug(pp.pprint(nodes))
 			# pp.pprint(full_nodes)
 			# logger.debug(pp.pprint(full_nodes))

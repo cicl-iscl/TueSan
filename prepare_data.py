@@ -10,18 +10,22 @@ import networkx as nx
 import pickle
 from pathlib import Path
 from logger import logger
-from utils import get_task_data, get_task1_IO
+from conllu_parser import load_conllu_data
+from utils import get_task_data, get_task1_IO, check_specific_sent
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 # DATA_DIR = Path('/Users/jingwen/Desktop/challenges/sanskrit/Tüsan/')
-DATA_DIR = Path('sanskrit/')  # relative path to local copy
-# DATA_DIR = Path('/data/jingwen/sanskrit/') # on server
+# DATA_DIR = Path('sanskrit/')  # relative path to local copy
+DATA_DIR = Path('/data/jingwen/sanskrit/') # on server
 
 TRAIN_JSON = Path(DATA_DIR, 'wsmp_train.json')
 TRAIN_GRAPHML = Path(DATA_DIR, 'final_graphml_train')
 TRAIN_PICKLE = Path('train_dataset.pickle')
+
+DCS_JSON = Path(DATA_DIR, 'dcs_filtered.json')
+DCS_DATASET = Path(DATA_DIR, 'dcs_processed.json')
 
 def read_json(jsonfile):
 	with open(jsonfile, encoding="utf-8") as data_file:
@@ -133,8 +137,7 @@ def load_data(picklefile):
 	else:
 		normalised_training_data = read_json(TRAIN_JSON)
 		for sent in tqdm(normalised_training_data):
-			# p = get_task1_datent)
-			# if p: logger.debug(p)
+
 			sent_id = sent['sent_id']
 			sandhied, unsandhied, unsandhied_tokenized = get_task1_data(sent)
 
@@ -169,16 +172,65 @@ def load_data(picklefile):
 
 
 
+
+
 if __name__ == '__main__':
 
 	logger.info("Reading and normalising training data ...")
 	s1 = time.time()
 	normalised_training_data = read_json(TRAIN_JSON)
-	logger.debug(normalised_training_data[0])
+	logger.debug(normalised_training_data[:3])
 	logger.info(f"Took {time.time()-s1:.2f} seconds.")
 
 	s2 = time.time()
 	dataset = load_data(TRAIN_PICKLE)
 	logger.info(f"Took {time.time()-s2:.2f} seconds to prepare task 1 data.")
 
-	logger.debug(pp.pprint(dataset[0]))
+	# pp.pprint(dataset[:5])
+
+	check_specific_sent(normalised_training_data, 6)  # same sent
+
+	# ---- load DCS dataset (filtered) ----
+	s3 = time.time()
+	normalised_dcs_dataset = read_json(DCS_JSON)
+	logger.info(f'It took {time.time()-s3:.2f} seconds to load DCS data.')
+
+	# ---- access data ----
+	dcs_dataset = []
+	if DCS_DATASET.is_file():
+		with open(DCS_DATASET, 'rb') as data:
+			dcs_dataset = json.load(data)
+	else:
+		for sent in tqdm(normalised_dcs_dataset):
+
+			sent_id = sent['sent_id']
+			sandhied, unsandhied, unsandhied_tokenized = get_task1_data(sent)
+
+			# Filter sents where sandhied >> unsandhied
+			if len(sandhied) / len(unsandhied) > 1.5:
+				# logger.warning(f'sandhied: {sandhied}\n')
+				# logger.warning(f'unsandhied: {unsandhied}\n')
+				continue
+
+			# ---- tokenize ----
+			tokens = tokenize(sandhied, unsandhied)
+			tokens = remove_trailing_syllables(tokens, unsandhied_tokenized)
+			tokens = merge_single_letters(tokens)
+			sandhied_merged, labels = make_labels(tokens)
+
+			# ---- construct datapoint ----
+			datapoint = {
+				'sandhied_merged': sandhied_merged,
+				'labels': labels,
+				'tokens': tokens,
+				# 'allowed_words': allowed_words,
+				'unsandhied': unsandhied.split(),
+				'sent_id': sent_id
+			}
+
+			dcs_dataset.append(datapoint)
+
+		with open(DCS_DATASET, 'wb') as out:
+			json.dump(dcs_dataset, out, ensure_ascii=False, indent=4)
+
+
