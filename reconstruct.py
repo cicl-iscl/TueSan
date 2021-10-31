@@ -82,8 +82,10 @@ if __name__ == '__main__':
 	wrong_ai_errors = 0
 	wrong_au_errors = 0
 	missing_h_errors = 0
+	suppose_h_errors = 0
 	consonant_errors = 0
 	propagated_errors = 0
+	missing_syllable_errors = 0
 	missing_word_errors = 0
 	other_errors = 0
 
@@ -112,14 +114,35 @@ if __name__ == '__main__':
 
 			next_pred_token, next_true_token = get_next(i, zipped)
 
-
-			if len(pred_token) == len(true_token) and pred_token[-1] == 'ā':
+			if len(true_token) - len(pred_token) >= 2:
+				missing_syllable_errors += 1
+				logger.debug('---- missing syllable error ----')
+				logger.warning(f'pred:\t{pred_token}')
+				logger.warning(f'true:\t{true_token}')
+				logger.info(f'with next pred:\t{pred_token}\t{next_pred_token}')
+				logger.info(f'with next true:\t{true_token}\t{next_true_token}\n')
+			elif len(pred_token) == len(true_token) and pred_token[-1] == 'ā':
 				wrong_a_errors +=1
 				logger.debug('---- wrong-ā-error ----')
 				logger.warning(f'pred:\t{pred_token}')
 				logger.warning(f'true:\t{true_token}')
 				logger.info(f'with next pred:\t{pred_token}\t{next_pred_token}')
 				logger.info(f'with next true:\t{true_token}\t{next_true_token}\n')
+			elif len(pred_token) + 1 == len(true_token) and true_token[-1] == 'ḥ' and pred_token[-1] != 'ḥ':
+				if pred_token[-1] == true_token[-2]:
+					missing_h_errors += 1
+					logger.debug('---- missing-ḥ-error ----')
+					logger.warning(f'pred:\t{pred_token}')
+					logger.warning(f'true:\t{true_token}')
+					logger.info(f'with next pred:\t{pred_token}\t{next_pred_token}')
+					logger.info(f'with next true:\t{true_token}\t{next_true_token}\n')
+				else:
+					suppose_h_errors += 1
+					logger.debug('---- suppose-ḥ-error ----')
+					logger.warning(f'pred:\t{pred_token}')
+					logger.warning(f'true:\t{true_token}')
+					logger.info(f'with next pred:\t{pred_token}\t{next_pred_token}')
+					logger.info(f'with next true:\t{true_token}\t{next_true_token}\n')
 			elif len(pred_token) + 1 == len(true_token) and next_true_token.startswith(('a', 'ā')):
 				wrong_a_errors +=1
 				logger.debug('---- wrong-ā-error ----')
@@ -183,13 +206,6 @@ if __name__ == '__main__':
 				logger.warning(f'true:\t{true_token}')
 				logger.info(f'with next pred:\t{pred_token}\t{next_pred_token}')
 				logger.info(f'with next true:\t{true_token}\t{next_true_token}\n')
-			elif len(pred_token) + 1 == len(true_token) and true_token[-1] == 'ḥ':
-				missing_h_errors += 1
-				logger.debug('---- missing-ḥ-error ----')
-				logger.warning(f'pred:\t{pred_token}')
-				logger.warning(f'true:\t{true_token}')
-				logger.info(f'with next pred:\t{pred_token}\t{next_pred_token}')
-				logger.info(f'with next true:\t{true_token}\t{next_true_token}\n')
 			elif pred_token[0] != true_token[0]:
 				propagated_errors +=1
 				logger.debug('---- propagated errors ----')
@@ -228,8 +244,10 @@ if __name__ == '__main__':
 			wrong_ai_errors,
 			wrong_au_errors,
 			missing_h_errors,
+			suppose_h_errors,
 			# propagated_errors,
 			consonant_errors,
+			missing_syllable_errors,
 			missing_word_errors,
 			other_errors,
 		]) - propagated_errors
@@ -249,11 +267,13 @@ if __name__ == '__main__':
 	logger.info(f"Missing h errors: {missing_h_errors}")
 	# Sometimes the vowel before this ḥ is elongated
 	# Can also introduce changes to the initial part of the next word
+	logger.info(f"Suppose h errors: {suppose_h_errors}")
 
 	# ---- consonants ----
 	logger.info(f"Consonant errors: {consonant_errors}")
 
 	logger.info(f"Propagated errors: {propagated_errors}")
+	logger.info(f"Missing syllable errors: {missing_syllable_errors}")
 	logger.info(f"Missing word errors: {missing_word_errors}")
 	logger.info(f"Other errors: {other_errors}")
 	logger.info(f"Total errors: {total_errors}")
