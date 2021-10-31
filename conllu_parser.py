@@ -7,16 +7,16 @@ from itertools import chain
 
 import json
 
-from tqdm import tqdm
 from logger import logger
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
-DATA_DIR = Path('sanskrit')
-DCS_DIR = Path('sanskrit', 'conllu', 'files')
-# DCS_TEST = Path('sanskrit', 'conllu', 'tests')
+# DATA_DIR = Path('sanskrit')
+DATA_DIR = Path('data','jingwen', 'sanskrit')  # server
+DCS_DIR = Path(DATA_DIR, 'conllu', 'files')
+# DCS_TEST = Path(DATA_DIR, 'conllu', 'tests')
 
-DCS_JSON = Path(DATA_DIR, 'dcs.json')
+DCS_JSON = Path(DATA_DIR, 'dcs_filtered.json')
 
 class Token(object):
 	__slots__ = [
