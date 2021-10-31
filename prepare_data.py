@@ -131,6 +131,7 @@ def load_data(picklefile):
 		with open(picklefile, 'rb') as data:
 			dataset = pickle.load(data)
 	else:
+		normalised_training_data = read_json(TRAIN_JSON)
 		for sent in tqdm(normalised_training_data):
 			# p = get_task1_datent)
 			# if p: logger.debug(p)
