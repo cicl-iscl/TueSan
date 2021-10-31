@@ -11,8 +11,8 @@ from logger import logger
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
-# DATA_DIR = Path('sanskrit')
-DATA_DIR = Path('data','jingwen', 'sanskrit')  # server
+DATA_DIR = Path('sanskrit')
+# DATA_DIR = Path('/data','jingwen', 'sanskrit')  # server
 DCS_DIR = Path(DATA_DIR, 'conllu', 'files')
 # DCS_TEST = Path(DATA_DIR, 'conllu', 'tests')
 
@@ -96,6 +96,7 @@ class Sentence(object):
 		self.tokens_dict = construct_dict(self.tokens)
 
 	def get_sent_id(self):  # keeping reference
+		# logger.info(self.comments.keys())
 		return self.comments['# text_line_id'].rstrip()
 
 	def get_text(self):
@@ -140,8 +141,9 @@ def gather_sents(conllu):
 				sent = Sentence(tokens, comments)
 				comments, tokens = {}, []
 				yield sent
-		sent = Sentence(tokens, comments)  # handles last sentence, connlu file is not well-formed
-		yield sent
+		if comments and tokens:
+			sent = Sentence(tokens, comments)  # handles last sentence, connlu file is not well-formed
+			yield sent
 
 def list_dcs(dcs_dir):
 	if not dcs_dir.exists():
