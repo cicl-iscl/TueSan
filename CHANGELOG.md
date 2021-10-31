@@ -2,6 +2,12 @@
 
 To keep us posted of what's been changed and added ;-), and to remind the forgetful self. 
 
+## 2021-10-31
+----
+### Added
+- `conllu_parser.py`: parses DCS conllu files, turns out "bad data" comes from incomplete annotations...
+
+
 ## 2021-10-30
 ----
 ### Added
