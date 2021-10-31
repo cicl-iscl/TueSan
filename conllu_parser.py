@@ -5,11 +5,18 @@ import re
 from pathlib import Path
 from itertools import chain
 
+import json
+
+from tqdm import tqdm
 from logger import logger
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 
+DATA_DIR = Path('sanskrit')
+DCS_DIR = Path('sanskrit', 'conllu', 'files')
+# DCS_TEST = Path('sanskrit', 'conllu', 'tests')
 
-# DCS_DIR = Path('sanskrit', 'conllu', 'files')
-DCS_TEST = Path('sanskrit', 'conllu', 'tests')
+DCS_JSON = Path(DATA_DIR, 'dcs.json')
 
 class Token(object):
 	__slots__ = [
@@ -113,39 +120,12 @@ class Sentence(object):
 			tok_index += 1
 		return seq
 
-	# def reconstruct_unsandhied_compound(self, start, end, form):
-	# 	unsandhied = form.replace("'", 'a')  # reverse avagraha
-	# 	#  index is one off
-	# 	first = self.tokens[start-1].unsandhied
-	# 	last = self.tokens[end-1].unsandhied
+	def reconstruct_unsandhied_compound(self, start, end):
+		return [self.tokens_dict[i].unsandhied for i in range(start, end+1)]
 
-	# 	if first[0] != unsandhied[0]:
-	# 		logger.warning('different starting characters...')
-	# 		logger.debug(f'word form:\t{unsandhied}')
-	# 		logger.debug(f'first component:\t{self.tokens[start-1].unsandhied}')
-	# 		unsandhied = first[0] + unsandhied[1:]
-	# 	elif len(last) > 1:
-	# 		unsandhied = unsandhied[:-2] + last[-2]  # potential vowel change
-	# 	elif len(last) == 1:
-	# 		if last[-1] != unsandhied[-1]:
-	# 			unsandhied = unsandhied[:-1] + last[-1]
-
-	# 	return unsandhied
-
-	def reconstruct_unsandhied_compound(self, start, end):  # returns a list
-		clist = []
-		# lemma = []
-		for i in range(start, end+1):  # index is one-off
-			clist.append(self.tokens_dict[i].unsandhied)
-			# lemma.append(self.tokens[i].lemma)
-		return clist
 
 def construct_dict(tokens):
-	tokens_dict = {}
-	for t in tokens:
-		tokens_dict[t.index] = t
-	return tokens_dict
-
+	return {t.index: t for t in tokens}
 
 def gather_sents(conllu):
 	with open(conllu, 'r', encoding='utf-8') as c:
@@ -163,39 +143,69 @@ def gather_sents(conllu):
 		sent = Sentence(tokens, comments)  # handles last sentence, connlu file is not well-formed
 		yield sent
 
-
 def list_dcs(dcs_dir):
 	if not dcs_dir.exists():
 		logger.warning(f'DCS directory {dcs_dir} does not exist.')
 	else:
 		return dcs_dir.rglob('*.conllu')
 
+def create_json(dataset, filename=DCS_JSON):
+	with open(filename, 'w', encoding='utf-8') as f:
+		json.dump(dataset, f, ensure_ascii=False, indent=4)
+
+
+def load_conllu_data(jsonfile=DCS_JSON):
+	if DCS_JSON.is_file():
+		with open(jsonfile, 'rb') as data:
+			dataset = json.load(data)
+	else:
+		conllu_files_iter = list_dcs(DCS_DIR)
+		# conllu_files_iter = list_dcs(DCS_TEST)
+
+		sentences = chain.from_iterable(  # process all conllu files
+			[
+				gather_sents(conllu)
+				for conllu in conllu_files_iter
+			]
+		)
+
+
+		dataset = []
+
+		for sent in sentences:
+			sent_id_dcs = sent.get_sent_id()
+			sent_text = sent.get_text()
+			unsandhied_tokenized = sent.reconstruct_unsandhied_sequence()
+			# ---- segmented sentence ----
+			segments = []
+			for item in unsandhied_tokenized:
+				if isinstance(item, list):
+					segments.extend(item)
+				else:
+					segments.append(item)
+			segmented_sentence = ' '.join(segments)
+
+			# ---- filter out entries with '_' (unknown values) ----
+			if not '_' in segmented_sentence:
+
+				datapoint = {
+					'sent_id': sent_id_dcs,
+					'joint_sentence': sent_text,
+					'segmented_sentence': segmented_sentence,
+					't1_ground_truth': unsandhied_tokenized
+				}
+
+				dataset.append(datapoint)
+
+				# pp.pprint(datapoint)
+
+		create_json(dataset)
+
+	return dataset
+
 
 if __name__ == '__main__':
 
-	# ---- test Token ----
-	# line="1	jayati	ji	VERB	V	Tense=Pres|Mood=Ind|Person=3|Number=Sing	_	_	_	_	156588	jayati	_"
-	# t = Token.from_str(line)
-	# print(t.unsandhied)
-
-	# conllu_files_iter = list_dcs(DCS_DIR)
-	conllu_files_iter = list_dcs(DCS_TEST)
-
-	sentences = chain.from_iterable(  # process all conllu files
-		[
-			gather_sents(conllu)
-			for conllu in conllu_files_iter
-		]
-	)
-
-	# next(sentences)  #
-	for sent in sentences:
-		sent_id_dcs = sent.get_sent_id()
-		sent_text = sent.get_text()
-		unsandhied_tokenized = sent.reconstruct_unsandhied_sequence()
-
-		print(sent_id_dcs)
-		print(sent_text)
-		print(unsandhied_tokenized)
-
+	dataset = load_conllu_data(DCS_JSON)
+	pprint(dataset[-2:])
 
