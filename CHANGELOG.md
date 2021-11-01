@@ -7,6 +7,9 @@ To keep us posted of what's been changed and added ;-), and to remind the forget
 ### Added
 - `conllu_parser.py`: parses DCS conllu files, turns out "bad data" comes from incomplete annotations...
 
+### Changed
+- `prepare_data.py`: tries to create a similar processed dataset, without 'allowed_words' since we have no graphml data for other sents.
+
 
 ## 2021-10-30
 ----
