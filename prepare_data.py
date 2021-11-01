@@ -230,7 +230,7 @@ if __name__ == '__main__':
 
 			dcs_dataset.append(datapoint)
 
-		with open(DCS_DATASET, 'wb') as out:
+		with open(DCS_DATASET, 'w') as out:
 			json.dump(dcs_dataset, out, ensure_ascii=False, indent=4)
 
 
