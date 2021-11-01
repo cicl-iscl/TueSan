@@ -30,3 +30,8 @@ poetry shell
       └── wsmp_dev.json
 ```
 Data can be accessed from `rummelhart` server, `/data/jingwen/sanskrit/`.
+
+
+### To-Do
+----
+- see if a mapping from UD features to analysis tags is doable
