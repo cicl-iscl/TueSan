@@ -20,14 +20,28 @@ poetry shell
 ----
 ```
     ./sanskrit/
-      ├── graphml_dev
+      ├── graphml_dev                     # auxiliary graphml data
       |   ├── ddd.graphml
       │   └── ...
       ├── final_graphml_train
       |   ├── ddd.graphml
       |   └── ...  
-      ├── wsmp_train.json
+      ├── conllu                          # DCS, from https://github.com/OliverHellwig/sanskrit/tree/master/dcs/data/conllu
+      |   ├── lookup
+      |   |   ├── dictionary.csv
+      |   |   ├── pos.csv
+      |   |   └── word-senses.csv  
+      |   └── files
+      |       ├── <subfolders>
+      |       |   ├── xxx.conllu
+      |       |   └── ...
+      |       ├── xxx.conllu
+      |       └── ...  
+      ├── dcs_filtered.json               # DCS for task 1, sentences with incomplete annotations are filtered out
+      ├── dcs_processed.json              # DCS for task 1, with 'sandhied_merged', 'labels', etc.
+      ├── wsmp_train.json                 # primary data
       └── wsmp_dev.json
+      
 ```
 Data can be accessed from `rummelhart` server, `/data/jingwen/sanskrit/`.
 
