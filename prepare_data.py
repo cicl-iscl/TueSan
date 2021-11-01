@@ -198,7 +198,7 @@ if __name__ == '__main__':
 	# ---- access data ----
 	dcs_dataset = []
 	if DCS_DATASET.is_file():
-		with open(DCS_DATASET, 'rb') as data:
+		with open(DCS_DATASET, 'r') as data:
 			dcs_dataset = json.load(data)
 	else:
 		for sent in tqdm(normalised_dcs_dataset):
