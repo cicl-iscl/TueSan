@@ -38,7 +38,7 @@ poetry shell
       |       ├── xxx.conllu
       |       └── ...  
       ├── dcs_filtered.json               # DCS for task 1, sentences with incomplete annotations are filtered out
-      ├── dcs_processed.json              # DCS for task 1, with 'sandhied_merged', 'labels', etc.
+      ├── dcs_processed.pickle            # DCS for task 1, with 'sandhied_merged', 'labels', etc.
       ├── wsmp_train.json                 # primary data
       └── wsmp_dev.json
       
