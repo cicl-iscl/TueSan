@@ -25,7 +25,7 @@ TRAIN_GRAPHML = Path(DATA_DIR, 'final_graphml_train')
 TRAIN_PICKLE = Path('train_dataset.pickle')
 
 DCS_JSON = Path(DATA_DIR, 'dcs_filtered.json')
-DCS_DATASET = Path(DATA_DIR, 'dcs_processed.json')
+DCS_DATASET = Path(DATA_DIR, 'dcs_processed.pickle')
 
 def read_json(jsonfile):
 	with open(jsonfile, encoding="utf-8") as data_file:
@@ -198,8 +198,8 @@ if __name__ == '__main__':
 	# ---- access data ----
 	dcs_dataset = []
 	if DCS_DATASET.is_file():
-		with open(DCS_DATASET, 'r') as data:
-			dcs_dataset = json.load(data)
+		with open(DCS_DATASET, 'rb') as data:
+			dcs_dataset = pickle.load(data)
 	else:
 		for sent in tqdm(normalised_dcs_dataset):
 
@@ -230,7 +230,7 @@ if __name__ == '__main__':
 
 			dcs_dataset.append(datapoint)
 
-		with open(DCS_DATASET, 'w') as out:
-			json.dump(dcs_dataset, out, ensure_ascii=False, indent=4)
+		with open(DCS_DATASET, 'wb') as out:
+			pickle.dump(dcs_dataset, out)
 
 
