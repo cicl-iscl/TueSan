@@ -15,8 +15,8 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 
-DATA_DIR = Path('sanskrit/')  # relative path to local copy
-# DATA_DIR = Path('/data/jingwen/sanskrit/') # on server
+# DATA_DIR = Path('sanskrit/')  # relative path to local copy
+DATA_DIR = Path('/data/jingwen/sanskrit/') # on server
 
 TRAIN_JSON = Path(DATA_DIR, 'wsmp_train.json')
 TRAIN_GRAPHML = Path(DATA_DIR, 'final_graphml_train')
@@ -48,7 +48,7 @@ def get_ground_truth_nodes(json_entry):
 	Returns a tuple which has two lists: list of the ground truth nodes from the corresponding graphml file in nested and flattened format
 	Input: JSON object -> json object for a DCS sentence
 	Output: tuple of two lists -> A nested list of tuples representing nodes where each tuple contains two values. node_id (integer) and node attributes (dictionary)
-								  A flattened list of tuples representing nodes where each tuple contains two values. node_id (integer) and node attributes (dictionary)
+		                      A flattened list of tuples representing nodes where each tuple contains two values. node_id (integer) and node attributes (dictionary)
 	"""
 
 	all_nodes = get_all_nodes(json_entry["sent_id"]) # get all the possible nodes from the graph
