@@ -15,8 +15,8 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
 
-# DATA_DIR = Path('sanskrit/')  # relative path to local copy
-DATA_DIR = Path('/data/jingwen/sanskrit/') # on server
+DATA_DIR = Path('sanskrit/')  # relative path to local copy
+# DATA_DIR = Path('/data/jingwen/sanskrit/') # on server
 
 TRAIN_JSON = Path(DATA_DIR, 'wsmp_train.json')
 TRAIN_GRAPHML = Path(DATA_DIR, 'final_graphml_train')
@@ -109,13 +109,13 @@ def check_specific_sent(normalised_data, sent_id):
 
 
 def get_stems(dictionary, word):
-	return [a[0] for a in dictionary[word]]
+	return set(a[0] for a in dictionary[word])
 
 def get_morphs(dictionary, word):
-	return [a[1] for a in dictionary[word]]
+	return set(a[1] for a in dictionary[word])
 
 def get_analyses(dictionary, word):
-	return list(dictionary[word])
+	return set(dictionary[word])
 
 if __name__ == '__main__':
 
@@ -128,25 +128,23 @@ if __name__ == '__main__':
 
 	train_dev = [TRAIN_JSON, DEV_JSON]
 
-	for json_file in train_dev:
-		if json_file == DEV_JSON: train=False
-		elif json_file == TRAIN_JSON: train=True
-		dataset = load_data(json_file)  # load normalised data
-		for entry in tqdm(dataset):
-			nodes = get_all_nodes(entry['sent_id'], train)
-			for node_id, node in nodes:
-				word = node['word']
-				# stem = node['stem']
-				# morph = node['morph']
-				if word not in words:
-					words.add(word)
-					dictionary[word]=set()
-				dictionary[word].add(tuple((node['stem'], node['morph'])))
+	# for json_file in train_dev:
+	# 	if json_file == DEV_JSON: train=False
+	# 	elif json_file == TRAIN_JSON: train=True
+	# 	dataset = load_data(json_file)  # load normalised data
+	# 	for entry in tqdm(dataset):
+	# 		nodes = get_all_nodes(entry['sent_id'], train)
+	# 		for node_id, node in nodes:
+	# 			word = node['word']
+	# 			if word not in words:
+	# 				words.add(word)
+	# 				dictionary[word]=set()
+	# 			dictionary[word].add(tuple((node['stem'], node['morph'])))
 
-	with open('words.pickle', 'wb') as out:
-		pickle.dump(words, out)
-	with open('dictionary.pickle', 'wb') as out:
-		pickle.dump(dictionary, out)
+	# with open('words.pickle', 'wb') as out:
+	# 	pickle.dump(words, out)
+	# with open('dictionary.pickle', 'wb') as out:
+	# 	pickle.dump(dictionary, out)
 
 	# --- test saved dictionary lookup ----
 	with open('dictionary.pickle', 'rb') as data:
