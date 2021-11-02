@@ -24,7 +24,7 @@ DEV_JSON = Path(DATA_DIR, 'wsmp_dev.json')
 DEV_GRAPHML = Path(DATA_DIR, 'graphml_dev')
 
 
-def get_all_nodes(sent_id, train=True):
+def get_all_nodes(sent_id, train=False):
 	"""
 	Returns the list of all nodes from the corresponding graphml file
 	Input: integer -> sentence ID
@@ -33,7 +33,7 @@ def get_all_nodes(sent_id, train=True):
 	if train:
 		graphml_path = Path(TRAIN_GRAPHML, f"{str(sent_id)}.graphml") # graphml files for training are in final_graphml_train/
 	else:
-		graphml_path = Path(DEV_GRAPHML, f"{str(sent_id)}.graphml")																				# graphml files for dev are in graphml_dev/
+		graphml_path = Path(DEV_GRAPHML, f"{str(sent_id)}.graphml")                                                                             # graphml files for dev are in graphml_dev/
 
 	graph_input = open(graphml_path, mode='rb')
 
@@ -48,7 +48,7 @@ def get_ground_truth_nodes(json_entry):
 	Returns a tuple which has two lists: list of the ground truth nodes from the corresponding graphml file in nested and flattened format
 	Input: JSON object -> json object for a DCS sentence
 	Output: tuple of two lists -> A nested list of tuples representing nodes where each tuple contains two values. node_id (integer) and node attributes (dictionary)
-		                      A flattened list of tuples representing nodes where each tuple contains two values. node_id (integer) and node attributes (dictionary)
+								  A flattened list of tuples representing nodes where each tuple contains two values. node_id (integer) and node attributes (dictionary)
 	"""
 
 	all_nodes = get_all_nodes(json_entry["sent_id"]) # get all the possible nodes from the graph
@@ -129,17 +129,19 @@ if __name__ == '__main__':
 	train_dev = [TRAIN_JSON, DEV_JSON]
 
 	for json_file in train_dev:
+		if json_file == DEV_JSON: train=False
+		elif json_file == TRAIN_JSON: train=True
 		dataset = load_data(json_file)  # load normalised data
 		for entry in tqdm(dataset):
-			nodes = get_all_nodes(entry['sent_id'])
+			nodes = get_all_nodes(entry['sent_id'], train)
 			for node_id, node in nodes:
 				word = node['word']
-				stem = node['stem']
-				morph = node['morph']
+				# stem = node['stem']
+				# morph = node['morph']
 				if word not in words:
-					words.add(node['word'])
+					words.add(word)
 					dictionary[word]=set()
-				dictionary[word].add(tuple((stem, morph)))
+				dictionary[word].add(tuple((node['stem'], node['morph'])))
 
 	with open('words.pickle', 'wb') as out:
 		pickle.dump(words, out)
