@@ -1,4 +1,5 @@
 import json
+import pickle
 import unicodedata
 
 # Provided by task organizers alongside data
@@ -52,4 +53,11 @@ def load_data(file_path):
         data = [unicode_normalize(item) for item in json.load(data_file)]
         data = [get_task2_IO(sentence) for sentence in data]
         return data
+    
+
+# Load sanskrit dictionary
+
+def load_sankrit_dictionary(file_path):
+    with open(file_path, 'rb') as sanskrit_dict:
+        return pickle.load(sanskrit_dict)
         

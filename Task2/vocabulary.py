@@ -38,7 +38,7 @@ def make_vocabulary(data):
     # Add special tokens to vocabulary
     vocabulary = specials + list(sorted(vocabulary))
     # We also need a padding tag
-    tags = list(sorted(tags)) + [PAD_TOKEN]
+    tags = list(sorted(tags)) + [PAD_TOKEN, UNK_TOKEN]
 
     # Convert tags (=str) to integers
     tag_encoder = LabelEncoder()

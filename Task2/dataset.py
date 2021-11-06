@@ -7,9 +7,17 @@ import torch
 import numpy as np
 
 from tqdm import tqdm
+from functools import partial
 from torch.utils.data import DataLoader
 from torch.nn.utils.rnn import pad_sequence
-from vocabulary import SOS_TOKEN, EOS_TOKEN
+from vocabulary import SOS_TOKEN, EOS_TOKEN, UNK_TOKEN
+
+
+def validate_tag(tag, tag_encoder):
+    if tag in tag_encoder.classes_:
+        return tag
+    else:
+        return UNK_TOKEN
 
 
 def index_dataset(data, char2index, tag_encoder, eval=False):
@@ -27,34 +35,47 @@ def index_dataset(data, char2index, tag_encoder, eval=False):
     for input, output in tqdm(data):
         # Whitespace tokenize sentence
         input = input.split()
-
-        # Index input sentence
-        indexed_input = [[char2index[char] for char in token] for token in input]
-        indexed_input = [torch.LongTensor(token) for token in indexed_input]
-    
         stems, tags = zip(*output)
-
-        # Prepend start of sequence token and append end of sequence token to stems
-        stems = [[SOS_TOKEN] + list(stem) + [EOS_TOKEN] for stem in stems]
-        # Index stems
-        indexed_stems = [[char2index[char] for char in stem] for stem in stems]
-        indexed_stems = [torch.LongTensor(stem) for stem in indexed_stems]
-
-        # Index tags
-        indexed_tags = torch.from_numpy(tag_encoder.transform(tags)).float()
-    
+        
         # Only save sentences if number of input tokens
         # is the same as number of ground truth stems/labels
-        if len(indexed_tags) == len(indexed_stems) == len(indexed_input):
-            data_updated.append((input, output))
-            if eval:
-                dp = (input, indexed_input, indexed_stems, indexed_tags)
-                indexed_dataset.append(dp)
-            else:
-                dp = (indexed_input, indexed_stems, indexed_tags)
-                indexed_dataset.append(dp)
-        else:
+        if len(input) != len(tags) or len(input) != len(stems):
             discarded += 1
+            continue
+
+        # Index input sentence
+        # Discard sentences with unknown characters
+        try:
+            indexed_input = [[char2index[char] for char in token] for token in input]
+            indexed_input = [torch.LongTensor(token) for token in indexed_input]
+        except KeyError:
+            discarded += 1
+            continue
+
+        # Index stems
+        try:
+            # Prepend start of sequence token and append end of sequence token to stems
+            stems = [[SOS_TOKEN] + list(stem) + [EOS_TOKEN] for stem in stems]
+            indexed_stems = [[char2index[char] for char in stem] for stem in stems]
+            indexed_stems = [torch.LongTensor(stem) for stem in indexed_stems]
+        except KeyError:
+            discarded += 1
+            continue
+
+        # Index tags
+        # If tag is unknown, replace with UNK_TOKEN
+        tag_validator = partial(validate_tag, tag_encoder = tag_encoder)
+        tags = list(map(tag_validator, tags))
+        indexed_tags = torch.from_numpy(tag_encoder.transform(tags)).float()
+    
+        # Save data
+        data_updated.append((input, output))
+        if eval:
+            dp = (input, indexed_input, indexed_stems, indexed_tags)
+            indexed_dataset.append(dp)
+        else:
+            dp = (indexed_input, indexed_stems, indexed_tags)
+            indexed_dataset.append(dp)
     
     return indexed_dataset, data_updated, discarded
 

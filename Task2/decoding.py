@@ -133,9 +133,10 @@ def informed_decoding(decoder, encoder_output, char_embeddings, token_lengths,
 
 
 def greedy_decoding(decoder, encoder_output, char_embeddings, token_lengths,
-                    eos_index, char2index, max_len=20):
+                    char2index, max_len=20):
+    eos_index = char2index[EOS_TOKEN]
     # Flatten encoder output: Each batch element corresponds to exactly 1 token
-    decoder_input = encoder_output.reshape(-1, encoded.shape[-1])
+    decoder_input = encoder_output.reshape(-1, encoder_output.shape[-1])
 
     # Start with start of sequence tokens
     batch_size = decoder_input.shape[0]

@@ -4,11 +4,12 @@ import json
 from functools import partial
 from torch.utils.data import DataLoader
 
-from helpers import load_data
+from helpers import load_data, load_sankrit_dictionary
 from vocabulary import make_vocabulary, PAD_TOKEN
 from dataset import index_dataset, collate_fn, eval_collate_fn
 from model import build_model, build_optimizer, save_model
 from training import train
+from evaluate import evaluate_model, print_metrics
 
 # Ignore warning (who cares?)
 import warnings
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     print("Make vocab")
     #TODO: Include UNK chars and labels
     vocabulary, tag_encoder, char2index, index2char = \
-        make_vocabulary(train_data + eval_data)
+        make_vocabulary(train_data)
     pad_tag = tag_encoder.transform([PAD_TOKEN]).item()
     
     # Index data
@@ -79,8 +80,21 @@ if __name__ == '__main__':
     save_model(model, optimizer, vocabulary, tag_encoder,
                char2index, index2char, name)
     
-    # TODO: Evaluate
-    pass
+    # Evaluate
+    mode = config['eval_mode']
+    dictionary_path = config.get('dictionary_path', None)
+    if dictionary_path is None:
+        dictionary = None
+    else:
+        dictionary = load_sankrit_dictionary(dictionary_path)
+    
+    eval_predictions = evaluate_model(
+        model, eval_dataloader, tag_encoder, char2index, index2char, device,
+        mode = mode, dictionary = dictionary
+        )
+    
+    print_metrics(eval_predictions, eval_data)
+    
     
     
     
