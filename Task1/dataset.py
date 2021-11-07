@@ -8,11 +8,11 @@ import numpy as np
 
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+from torch.nn.utils.rnn import pad_sequence
 
 
 def index_dataset(data, char2index):
-    """From preconstructed dataset...
-    """
+    """From preconstructed dataset..."""
     indexed_dataset = []
     data_updated = []
     discarded = 0
@@ -53,3 +53,7 @@ def collate_fn(batch):
     labels = torch.stack(padded_labels)
 
     return inputs, labels
+
+
+def eval_collate_fn(batch):
+    return pad_sequence(batch)

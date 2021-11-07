@@ -8,8 +8,10 @@ shell_handler = RichHandler()
 file_handler = logging.FileHandler("debug.log")
 
 # formatter
-file_fmt = "%(levelname)s\t[%(asctime)s]\
-                        \t\t%(filename)s:%(lineno)s\n%(funcName)s:\n%(message)s\n"
+file_fmt = (
+    "%(levelname)s\t[%(asctime)s]                       "
+    " \t\t%(filename)s:%(lineno)s\n%(funcName)s:\n%(message)s\n"
+)
 file_formatter = logging.Formatter(file_fmt, datefmt="%d-%m %H:%M")
 file_handler.setFormatter(file_formatter)
 

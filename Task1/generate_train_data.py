@@ -1,7 +1,7 @@
 """Generate training data for Task 1
-    with or without extra translit.
+	with or without extra translit.
 
-    For alignment we need to also convert the tokens.
+	For alignment we need to also convert the tokens.
 """
 
 import numpy as np
@@ -29,7 +29,7 @@ def get_data(datapoint, translit=False):
 def tokenize(sandhied, unsandhied):
     # Align unsandhied tokens with sandhied sentence
     # to get split points
-    alignment = align(a = sandhied, b = unsandhied)
+    alignment = align(a=sandhied, b=unsandhied)
     alignment = alignment.get_matching_blocks()
     sandhied_indices, unsandhied_indices, _ = zip(*alignment)
 
@@ -47,7 +47,10 @@ def tokenize(sandhied, unsandhied):
 
     for sandhied_index, unsandhied_index in zip(sandhied_indices, unsandhied_indices):
         if sandhied_pointer != sandhied_index or unsandhied_pointer != unsandhied_index:
-            if sandhied_index + 1 not in split_indices and sandhied_index - 1 not in split_indices:
+            if (
+                sandhied_index + 1 not in split_indices
+                and sandhied_index - 1 not in split_indices
+            ):
                 split_indices.append(sandhied_index)
                 sandhied_pointer = sandhied_index
                 unsandhied_pointer = unsandhied_index
@@ -68,17 +71,22 @@ def tokenize(sandhied, unsandhied):
 
 def remove_trailing_syllables(tokens, unsandhied_tokenized, translit=False):
     if translit:
-        if len(tokens) > len(unsandhied_tokenized) and \
-            len(tokens) > 2 and \
-            to_intern(unsandhied_tokenized[-1]).endswith(tokens[-1]) and \
-            [to_intern(t) for t in unsandhied_tokenized[:3]] == tokens[-2].strip()[:3]:
+        if (
+            len(tokens) > len(unsandhied_tokenized)
+            and len(tokens) > 2
+            and to_intern(unsandhied_tokenized[-1]).endswith(tokens[-1])
+            and [to_intern(t) for t in unsandhied_tokenized[:3]]
+            == tokens[-2].strip()[:3]
+        ):
 
             tokens = tokens[:-1]
 
-    elif len(tokens) > len(unsandhied_tokenized) and \
-            len(tokens) > 2 and \
-            unsandhied_tokenized[-1].endswith(tokens[-1]) and \
-            unsandhied_tokenized[:3] == tokens[-2].strip()[:3]:
+    elif (
+        len(tokens) > len(unsandhied_tokenized)
+        and len(tokens) > 2
+        and unsandhied_tokenized[-1].endswith(tokens[-1])
+        and unsandhied_tokenized[:3] == tokens[-2].strip()[:3]
+    ):
 
         tokens = tokens[:-1]
 
@@ -122,9 +130,9 @@ def get_allowed_words(sent_id, graphml_folder=None, translit=False):
     with open(graphml_path, mode='rb') as graph_input:
         graph = nx.read_graphml(graph_input)
     if translit:
-        allowed_words = [to_intern(node[1]['word']) for node in graph.nodes(data = True)]
+        allowed_words = [to_intern(node[1]['word']) for node in graph.nodes(data=True)]
     else:
-        allowed_words = [node[1]['word'] for node in graph.nodes(data = True)]
+        allowed_words = [node[1]['word'] for node in graph.nodes(data=True)]
 
     return list(sorted(set(allowed_words)))
 
