@@ -19,7 +19,7 @@ def index_dataset(data, char2index):
 
     for dp in tqdm(data):
         # Whitespaces are already replaced with underscores in 'sandhied_merged'
-        text, labels = dp['sandhied_merged'], dp['labels']
+        text, labels = dp["sandhied_merged"], dp["labels"]
         indexed_text = [char2index[char] for char in text]
         indexed_text = torch.LongTensor(indexed_text)
         labels = torch.from_numpy(labels).float()

@@ -127,12 +127,12 @@ def make_labels(tokens):
 
 def get_allowed_words(sent_id, graphml_folder=None, translit=False):
     graphml_path = Path(graphml_folder, str(str(sent_id) + ".graphml"))
-    with open(graphml_path, mode='rb') as graph_input:
+    with open(graphml_path, mode="rb") as graph_input:
         graph = nx.read_graphml(graph_input)
     if translit:
-        allowed_words = [to_intern(node[1]['word']) for node in graph.nodes(data=True)]
+        allowed_words = [to_intern(node[1]["word"]) for node in graph.nodes(data=True)]
     else:
-        allowed_words = [node[1]['word'] for node in graph.nodes(data=True)]
+        allowed_words = [node[1]["word"] for node in graph.nodes(data=True)]
 
     return list(sorted(set(allowed_words)))
 
@@ -142,7 +142,7 @@ def construct_dataset(data, translit=False, graphml_folder=None):
     cnt = 0
 
     for sentence in tqdm(data):
-        sent_id = sentence['sent_id']
+        sent_id = sentence["sent_id"]
         sandhied, unsandhied, unsandhied_tokenized = get_data(sentence, translit)
 
         # Filter sents where sandhied >> unsandhied
@@ -159,12 +159,12 @@ def construct_dataset(data, translit=False, graphml_folder=None):
         allowed_words = get_allowed_words(sent_id, graphml_folder, translit)
 
         datapoint = {
-            'sandhied_merged': sandhied_merged,
-            'labels': labels,
-            'tokens': tokens,
-            'allowed_words': allowed_words,
-            'unsandhied': unsandhied.split(),
-            'sent_id': sent_id,
+            "sandhied_merged": sandhied_merged,
+            "labels": labels,
+            "tokens": tokens,
+            "allowed_words": allowed_words,
+            "unsandhied": unsandhied.split(),
+            "sent_id": sent_id,
         }
 
         dataset.append(datapoint)

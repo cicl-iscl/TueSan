@@ -13,8 +13,8 @@ import torch.nn
 
 def build_model(config, vocabulary):
     # Read hyperparameters from config
-    embedding_dim = config['embedding_dim']
-    hidden_dim = config['hidden_dim']
+    embedding_dim = config["embedding_dim"]
+    hidden_dim = config["hidden_dim"]
 
     return SegmenterModel(len(vocabulary), embedding_dim, hidden_dim)
 
@@ -73,19 +73,19 @@ def build_optimizer(model, config):
 
 
 def get_loss(config):
-    return getattr(torch.nn, config['loss'])()
+    return getattr(torch.nn, config["loss"])()
 
 
 def save_model(model, optimizer, vocabulary, char2index, index2char, name):
     info = {
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
-        'vocabulary': vocabulary,
-        'char2index': char2index,
-        'index2char': index2char,
+        "model_state_dict": model.state_dict(),
+        "optimizer_state_dict": optimizer.state_dict(),
+        "vocabulary": vocabulary,
+        "char2index": char2index,
+        "index2char": index2char,
     }
-    if not os.path.exists('./saved_models'):
-        os.makedirs('./saved_models')
+    if not os.path.exists("./saved_models"):
+        os.makedirs("./saved_models")
 
-    path = os.path.join('.', 'saved_models', name + '.pt')
+    path = os.path.join(".", "saved_models", name + ".pt")
     torch.save(info, path)
