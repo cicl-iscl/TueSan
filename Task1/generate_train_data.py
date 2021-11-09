@@ -1,7 +1,7 @@
 """Generate training data for Task 1
-	with or without extra translit.
+    with or without extra translit.
 
-	For alignment we need to also convert the tokens.
+    For alignment we need to also convert the tokens.
 """
 
 import numpy as np
@@ -137,39 +137,51 @@ def get_allowed_words(sent_id, graphml_folder=None, translit=False):
     return list(sorted(set(allowed_words)))
 
 
-def construct_dataset(data, translit=False, graphml_folder=None):
+def construct_dataset(data, translit=False, graphml_folder=None, eval=False):
     dataset = []
     cnt = 0
 
     for sentence in tqdm(data):
         sent_id = sentence["sent_id"]
         sandhied, unsandhied, unsandhied_tokenized = get_data(sentence, translit)
-
-        # Filter sents where sandhied >> unsandhied
-        # These are most likely wrong
-        if len(sandhied) / len(unsandhied) > 1.5:
-            cnt += 1
-            continue
-
-        tokens = tokenize(sandhied, unsandhied)
-        tokens = remove_trailing_syllables(tokens, unsandhied_tokenized, translit)
-        tokens = merge_single_letters(tokens)
-
-        sandhied_merged, labels = make_labels(tokens)
         allowed_words = get_allowed_words(sent_id, graphml_folder, translit)
 
-        datapoint = {
-            "sandhied_merged": sandhied_merged,
-            "labels": labels,
-            "tokens": tokens,
-            "allowed_words": allowed_words,
-            "unsandhied": unsandhied.split(),
-            "sent_id": sent_id,
-        }
+        if eval:
 
-        dataset.append(datapoint)
-        # break
+            datapoint = {
+                "sandhied": sandhied.replace(" ", "_"),
+                "allowed_words": allowed_words,
+                "unsandhied": unsandhied.split(),
+                "sent_id": sent_id,
+            }
+            dataset.append(datapoint)
 
-    print(f"{cnt} sentences discarded during dataset construction.")
+        else:
+
+            # Filter sents where sandhied >> unsandhied
+            # These are most likely wrong
+            if len(sandhied) / len(unsandhied) > 1.5:
+                cnt += 1
+                continue
+
+            tokens = tokenize(sandhied, unsandhied)
+            tokens = remove_trailing_syllables(tokens, unsandhied_tokenized, translit)
+            tokens = merge_single_letters(tokens)
+
+            sandhied_merged, labels = make_labels(tokens)
+
+            datapoint = {
+                "sandhied_merged": sandhied_merged,
+                "labels": labels,
+                "tokens": tokens,
+                "allowed_words": allowed_words,
+                "unsandhied": unsandhied.split(),
+                "sent_id": sent_id,
+            }
+
+            dataset.append(datapoint)
+            # break
+
+            print(f"{cnt} sentences discarded during training dataset construction.")
 
     return dataset

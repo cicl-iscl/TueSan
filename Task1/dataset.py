@@ -11,19 +11,25 @@ from torch.utils.data import DataLoader
 from torch.nn.utils.rnn import pad_sequence
 
 
-def index_dataset(data, char2index):
+def index_dataset(data, char2index, eval=False):
     """From preconstructed dataset..."""
     indexed_dataset = []
     data_updated = []
     discarded = 0
 
     for dp in tqdm(data):
-        # Whitespaces are already replaced with underscores in 'sandhied_merged'
-        text, labels = dp["sandhied_merged"], dp["labels"]
-        indexed_text = [char2index[char] for char in text]
-        indexed_text = torch.LongTensor(indexed_text)
-        labels = torch.from_numpy(labels).float()
-        indexed_dataset.append([indexed_text, labels])
+        if eval:
+            text = dp["sandhied"]
+            indexed_text = [char2index[char] for char in text]
+            indexed_text = torch.LongTensor(indexed_text)
+            indexed_dataset.append(indexed_text)
+        else:
+            # Whitespaces are already replaced with underscores in 'sandhied_merged'
+            text, labels = dp["sandhied_merged"], dp["labels"]
+            indexed_text = [char2index[char] for char in text]
+            indexed_text = torch.LongTensor(indexed_text)
+            labels = torch.from_numpy(labels).float()
+            indexed_dataset.append([indexed_text, labels])
 
     return indexed_dataset
 

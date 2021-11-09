@@ -8,7 +8,7 @@ from helpers import load_data, load_sankrit_dictionary, check_specific_sent
 from vocabulary import make_vocabulary
 from generate_train_data import construct_dataset
 from dataset import index_dataset, collate_fn, eval_collate_fn
-from model import build_model, get_loss, build_optimizer, save_model
+from model import build_model, get_loss, build_optimizer, save_model, load_model
 from training import train
 from predicting import make_predictions
 from helpers import save_task1_predictions
@@ -71,7 +71,9 @@ if __name__ == "__main__":
         eval_dat = {}
         with open(config["eval_path"], encoding="utf-8") as eval_json:
             eval_dat = json.load(eval_json)
-        eval_dataset = construct_dataset(eval_dat, translit, config["eval_graphml"])
+        eval_dataset = construct_dataset(
+            eval_dat, translit, config["eval_graphml"], eval=True
+        )
         with open(Path(config["out_folder"], "translit_dev.pickle"), "wb") as outf:
             pickle.dump(eval_dataset, outf)
 
@@ -82,14 +84,11 @@ if __name__ == "__main__":
     # Index data
     logger.info("Index train data")
     train_data_indexed = index_dataset(train_dataset, char2index)
-    eval_data_indexed = index_dataset(eval_dataset, char2index)
+    eval_data_indexed = index_dataset(eval_dataset, char2index, eval=True)
 
     # Display an example
     pp.pprint(eval_dataset[-1])
     pp.pprint(eval_data_indexed[-1])
-    assert len(eval_dataset[-1]["sandhied_merged"]) == eval_data_indexed[-1][0].size(
-        dim=0
-    )
 
     # Build dataloaders
     batch_size = config["batch_size"]
@@ -105,7 +104,7 @@ if __name__ == "__main__":
         shuffle=False,
     )
 
-    # Build model
+    # # Build model
     logger.info("Build model")
     model = build_model(config, vocabulary)
     use_cuda = config["cuda"]
@@ -115,8 +114,8 @@ if __name__ == "__main__":
 
     model = model.to(device)
 
-    # Build optimizer
-    optimizer = build_optimizer(model, config)
+    # # Build optimizer
+    optimizer = build_optimizer(model)  # may need config
 
     # Train
     logger.info("Train\n")
@@ -128,9 +127,12 @@ if __name__ == "__main__":
         model, criterion, optimizer, train_dataloader, epochs, device
     )
 
-    # Save model
+    # # Save model
     name = config["name"]
     save_model(model, optimizer, vocabulary, char2index, index2char, name)
+
+    # Load model
+    # model = load_model(name, config, vocabulary)
 
     # Predictions
     predictions, true_unsandhied, split_predictions = make_predictions(

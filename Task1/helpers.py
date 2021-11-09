@@ -60,7 +60,7 @@ def get_task1_IO(json_entry, translit=False):
     Word segmentation.
     Input: json object -> Json object for a DCS sentence
     Output: tuple(String, List) -> A tuple of the sentence (words joined with sandhi)
-                                                                                                                                    and a flattened list of segmented words
+                                                                                                                                                                                                                                                                    and a flattened list of segmented words
     """
 
     if translit:

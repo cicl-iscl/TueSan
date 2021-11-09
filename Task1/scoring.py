@@ -357,8 +357,7 @@ def evaluate(solution, prediction, task_id):
             "task_3_tscore": avg_task_scores,
         }
 
-    print("Scores:")
-    print(scores)
+    print_scores(scores)
 
     return scores
 
@@ -518,3 +517,9 @@ if __name__ == "__main__":
         with open((os.path.join(score_dir, "scores.txt")), "w") as score_f:
             score_f.write(scores_string)
         print("\nFinished writing to scores.txt")
+
+
+def print_scores(scores):
+    print("-----------")
+    for metric, score in scores.items():
+        print(f"{metric}:\t{score:.2f}")

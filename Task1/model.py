@@ -67,7 +67,7 @@ class SegmenterModel(nn.Module):
         return masked_predictions
 
 
-def build_optimizer(model, config):
+def build_optimizer(model):
 
     return AdamW(model.parameters())
 
@@ -89,3 +89,13 @@ def save_model(model, optimizer, vocabulary, char2index, index2char, name):
 
     path = os.path.join(".", "saved_models", name + ".pt")
     torch.save(info, path)
+
+
+def load_model(name, config, vocabulary):
+    model = build_model(config, vocabulary)
+    checkpoint = torch.load(os.path.join(".", "saved_models", name + ".pt"))
+    model.load_state_dict(checkpoint["model_state_dict"])
+
+    model.eval()
+
+    return model

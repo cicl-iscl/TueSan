@@ -4,47 +4,47 @@
 """
 
 UNICODE2INTERN = [
-    (u'ā', 'A'),
-    (u'ī', 'I'),
-    (u'ū', 'U'),
-    (u'ṛ', 'R'),
-    (u'ṝ', 'L'),  # ??
-    (u'ḷ', '?'),
-    (u'ḹ', '?'),
-    (u'ai', 'E'),
-    (u'au', 'O'),
+    (u"ā", "A"),
+    (u"ī", "I"),
+    (u"ū", "U"),
+    (u"ṛ", "R"),
+    (u"ṝ", "L"),  # ??
+    (u"ḷ", "?"),
+    (u"ḹ", "?"),
+    (u"ai", "E"),
+    (u"au", "O"),
     # gutturals
-    (u'kh', 'K'),
-    (u'gh', 'G'),
-    (u'ṅ', 'F'),
+    (u"kh", "K"),
+    (u"gh", "G"),
+    (u"ṅ", "F"),
     # palatals
-    (u'ch', 'C'),
-    (u'jh', 'J'),
-    (u'ñ', 'Q'),
+    (u"ch", "C"),
+    (u"jh", "J"),
+    (u"ñ", "Q"),
     # retroflexes
-    (u'ṭh', 'W'),
-    (u'ṭ', 'w'),
-    (u'ḍh', 'X'),
-    (u'ḍ', 'x'),
-    (u'ṇ', 'N'),
+    (u"ṭh", "W"),
+    (u"ṭ", "w"),
+    (u"ḍh", "X"),
+    (u"ḍ", "x"),
+    (u"ṇ", "N"),
     # dentals
-    (u'th', 'T'),
-    (u'dh', 'D'),
+    (u"th", "T"),
+    (u"dh", "D"),
     # labials
-    (u'ph', 'P'),
-    (u'bh', 'B'),
+    (u"ph", "P"),
+    (u"bh", "B"),
     # others
-    (u'ś', 'S'),
-    (u'ṣ', 'z'),
-    (u'ṃ', 'M'),
-    (u'ḥ', 'H'),
+    (u"ś", "S"),
+    (u"ṣ", "z"),
+    (u"ṃ", "M"),
+    (u"ḥ", "H"),
 ]
 
 
 def unicode_to_internal_transliteration(s):
-    '''
+    """
     Transforms from IAST to the internal transliteration
-    '''
+    """
     for src, dst in UNICODE2INTERN:
         s = s.replace(src, dst)
     return s
