@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # - *- coding: utf- 8 - *-
 import editdistance
+import numpy as np
 
 VOWELS = ["a", "e", "i", "o", "u", "ā", "ī", "ū", "ṛ", "ṝ", "'"]
 CONSONANTS = [
