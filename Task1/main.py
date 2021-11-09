@@ -51,21 +51,27 @@ if __name__ == "__main__":
     #   if char not in vocabulary:
     #       logger.warning(f"{char} not in train vocab.")
 
+    filename = ""
+    if translit:
+        filename = "translit"
+    else:
+        filename = "unicode"
+
     # Construct train data, discarded 457 sents
-    if Path(config["out_folder"], "translit_train.pickle").is_file():
-        with open(Path(config["out_folder"], "translit_train.pickle"), "rb") as f:
+    if Path(config["out_folder"], f"{filename}_train.pickle").is_file():
+        with open(Path(config["out_folder"], f"{filename}_train.pickle"), "rb") as f:
             train_dataset = pickle.load(f)
     else:
         dat = {}
         with open(config["train_path"], encoding="utf-8") as train_json:
             dat = json.load(train_json)
         train_dataset = construct_dataset(dat, translit, config["train_graphml"])
-        with open(Path(config["out_folder"], "translit_train.pickle"), "wb") as outf:
+        with open(Path(config["out_folder"], f"{filename}_train.pickle"), "wb") as outf:
             pickle.dump(train_dataset, outf)
 
     # Construct eval data, discarded 38 sentences
-    if Path(config["out_folder"], "translit_dev.pickle").is_file():
-        with open(Path(config["out_folder"], "translit_dev.pickle"), "rb") as f:
+    if Path(config["out_folder"], f"{filename}_dev.pickle").is_file():
+        with open(Path(config["out_folder"], f"{filename}_dev.pickle"), "rb") as f:
             eval_dataset = pickle.load(f)
     else:
         eval_dat = {}
@@ -74,7 +80,7 @@ if __name__ == "__main__":
         eval_dataset = construct_dataset(
             eval_dat, translit, config["eval_graphml"], eval=True
         )
-        with open(Path(config["out_folder"], "translit_dev.pickle"), "wb") as outf:
+        with open(Path(config["out_folder"], f"{filename}_dev.pickle"), "wb") as outf:
             pickle.dump(eval_dataset, outf)
 
     # Display an example datapoint
