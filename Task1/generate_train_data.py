@@ -182,6 +182,6 @@ def construct_dataset(data, translit=False, graphml_folder=None, eval=False):
             dataset.append(datapoint)
             # break
 
-            print(f"{cnt} sentences discarded during training dataset construction.")
+    print(f"{cnt} sentences discarded during training dataset construction.")
 
     return dataset
