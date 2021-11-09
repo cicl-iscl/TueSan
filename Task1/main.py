@@ -34,8 +34,8 @@ if __name__ == "__main__":
     eval_data = load_data(config["eval_path"], translit)
 
     # Display an example sentence
-    sent = check_specific_sent(eval_data, 582923)
-    pp.pprint(sent)
+    # sent = check_specific_sent(eval_data, 582923)
+    # pp.pprint(sent)
 
     # Make vocabulary
     # whitespaces are translated to '_' and treated as a normal character
@@ -78,15 +78,17 @@ if __name__ == "__main__":
             pickle.dump(eval_dataset, outf)
 
     # Display an example datapoint
-    pp.pprint(train_dataset[-1])
-    pp.pprint(eval_dataset[-1])
+    # pp.pprint(train_dataset[-1])
+    # pp.pprint(eval_dataset[-1])
 
     # Index data
     logger.info("Index train data")
     train_data_indexed = index_dataset(train_dataset, char2index)
+    logger.info("Index eval data")
     eval_data_indexed = index_dataset(eval_dataset, char2index, eval=True)
 
     # Display an example
+    logger.info("Example eval datapoint")
     pp.pprint(eval_dataset[-1])
     pp.pprint(eval_data_indexed[-1])
 
@@ -135,18 +137,25 @@ if __name__ == "__main__":
     # model = load_model(name, config, vocabulary)
 
     # Predictions
+    logger.info("Predict\n")
     predictions, true_unsandhied, split_predictions = make_predictions(
         model, eval_dataloader, eval_dataset, device, translit
     )
 
     # (false) end of prediction
     duration = time.time() - start
+    logger.info(f"Duration: {duration:.2f} seconds.\n")
 
     # Example prediction
+    logger.info(f"Example prediction")
     idx = 10
 
-    logger.info(split_predictions[idx])
-    logger.info(
+    logger.info("Input sentence:")
+    logger.debug(eval_dataset[idx]["sandhied"])
+
+    logger.info("Predicted split points:")
+    logger.debug(split_predictions[idx])
+    logger.debug(
         [
             eval_dataset[idx]["sandhied"][i:j]
             for i, j in zip(
@@ -154,11 +163,14 @@ if __name__ == "__main__":
             )
         ]
     )
-    logger.info(eval_dataset[idx]["sandhied"])
-    logger.info(predictions[idx])
-    logger.info(true_unsandhied[idx])
+
+    logger.info("Predicted segmentation:")
+    logger.debug(predictions[idx])
+    logger.info("Gold segmentation:")
+    logger.debug(true_unsandhied[idx])
 
     # Create submission
+    logger.info("Create submission files")
     save_task1_predictions(predictions, duration)
 
     # Evaluation
