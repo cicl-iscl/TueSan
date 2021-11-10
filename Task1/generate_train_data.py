@@ -152,7 +152,7 @@ def construct_dataset(data, translit=False, graphml_folder=None, eval=False):
             datapoint = {
                 "sandhied": sandhied.replace(" ", "_"),
                 "allowed_words": allowed_words,
-                "unsandhied": unsandhied.split(),
+                "unsandhied": unsandhied.split("_"),
                 "sent_id": sent_id,
             }
             dataset.append(datapoint)
@@ -176,7 +176,7 @@ def construct_dataset(data, translit=False, graphml_folder=None, eval=False):
                 "labels": labels,
                 "tokens": tokens,
                 "allowed_words": allowed_words,
-                "unsandhied": unsandhied.split(),
+                "unsandhied": unsandhied.split("_"),
                 "sent_id": sent_id,
             }
 
