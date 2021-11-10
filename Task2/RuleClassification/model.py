@@ -28,8 +28,8 @@ def build_model(config, vocabulary, classes, names):
         embedding_size,
         encoder_hidden_size,
         encoder_max_ngram,
-        char2token_mode = encoder_char2token_mode,
-        dropout=dropout
+        char2token_mode=encoder_char2token_mode,
+        dropout=dropout,
     )
 
     # Rule/Tag classifier -> morphological rules/tags

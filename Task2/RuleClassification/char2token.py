@@ -14,13 +14,16 @@ Implemented variants:
 import torch
 import torch.nn as nn
 
+from torch.nn.utils.rnn import pack_padded_sequence
+from torch.nn.utils.rnn import pad_packed_sequence
+
 from mlp import mlp
 
 
-def lengths2mask(lengths, feature_dim = None):
+def lengths2mask(lengths, feature_dim=None):
     with torch.no_grad():
         # Start with sequence of ascending integers
-        mask = torch.arange(torch.max(lengths), device = lengths.device)
+        mask = torch.arange(torch.max(lengths), device=lengths.device)
         # Replicate along batch dim
         mask = mask.unsqueeze(0)
         mask = mask.tile(lengths.shape[0], 1)
@@ -28,72 +31,71 @@ def lengths2mask(lengths, feature_dim = None):
         # -> turn to 1, others 0
         mask = mask < lengths.unsqueeze(-1)
         mask = mask.bool()
-        
+
         if feature_dim is not None:
             mask = mask.unsqueeze(-1)
-            #mask = mask.tile(1, 1, feature_dim)
-        
+            # mask = mask.tile(1, 1, feature_dim)
+
         return mask
 
 
 class AvgPoolChar2TokenEncoder(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
-    
-    
+
     def forward(self, char_embeddings, token_lengths):
         # char_embeddings: shape (#tokens, #chars, features)
         # token_lengths: (#tokens,)
-        
+
         # Flatten token lengths
         token_lengths = torch.flatten(token_lengths)
         assert len(token_lengths) == char_embeddings.shape[0]
-        
+
         # Create mask
         embedding_dim = char_embeddings.shape[-1]
-        mask = lengths2mask(token_lengths, feature_dim = embedding_dim)
-        
+        mask = lengths2mask(token_lengths, feature_dim=embedding_dim)
+
         # Replace padded values with 0.0
         char_embeddings = torch.masked_fill(char_embeddings, mask, 0.0)
-        
+
         # Sum along char dimension (feature-wise pooling)
-        token_embeddings = char_embeddings.sum(dim = 1)
+        token_embeddings = char_embeddings.sum(dim=1)
         # shape (batch, features)
-        
+
         # Devide by sequence length (= take average)
         # First, we have to clamp `lengths` to 1 -> avoid ZeroDivisionError
-        lengths = torch.clamp(lengths, min=1)
-        token_embeddings = token_embeddings / lengths
-        
+        token_lengths = torch.clamp(token_lengths, min=1)
+        token_lengths = token_lengths.unsqueeze(-1)
+        token_embeddings = token_embeddings / token_lengths
+
         return token_embeddings
-    
+
 
 class MaxPoolChar2TokenEncoder(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
-        
+
         self.mask_value = torch.finfo().min
-    
-    
+
     def forward(self, char_embeddings, token_lengths):
         # char_embeddings: shape (#tokens, #chars, features)
         # token_lengths: (#tokens,)
-        
+
         # Flatten token lengths
         token_lengths = torch.flatten(token_lengths)
         assert len(token_lengths) == char_embeddings.shape[0]
-        
+
         # Create mask
         embedding_dim = char_embeddings.shape[-1]
-        mask = lengths2mask(token_lengths, feature_dim = embedding_dim)
-        
+        mask = lengths2mask(token_lengths, feature_dim=embedding_dim)
+
         # Replace padded values with 0.0
         char_embeddings = char_embeddings.masked_fill(mask, self.mask_value)
-        
+
         # Sum max char dimension (feature-wise pooling)
-        token_embeddings = torch.amax(dim = 1)
+        token_embeddings = torch.amax(dim=1)
         # shape (batch, features)
-        
+
         return token_embeddings
 
 
@@ -105,10 +107,7 @@ class LSTMChar2TokenEncoder(nn.Module):
     """
 
     def __init__(
-        self,
-        input_dim: int,
-        hidden_dim = None,
-        dropout = 0.0,
+        self, input_dim: int, hidden_dim=None, dropout=0.0,
     ):
         super().__init__()
         hidden_dim = hidden_dim if hidden_dim is not None else input_dim
@@ -125,7 +124,6 @@ class LSTMChar2TokenEncoder(nn.Module):
             dropout=dropout,
         )
 
-
     def forward(self, char_embeddings, token_lengths):
         # Taken from https://github.com/pytorch/pytorch/issues/4582#issuecomment-589905631
         # PyTorch can't handle 0 length sequences, so we have to waste some
@@ -138,8 +136,7 @@ class LSTMChar2TokenEncoder(nn.Module):
         clamped_lengths = torch.clamp(token_lengths, min=1)
         # Pack sequences
         char_embeddings = pack_padded_sequence(
-            char_embeddings, clamped_lengths, batch_first=True,
-            enforce_sorted=False
+            char_embeddings, clamped_lengths, batch_first=True, enforce_sorted=False
         )
         # Apply BiLSTM
         _, (hidden, _) = self.rnn(char_embeddings)
@@ -150,7 +147,7 @@ class LSTMChar2TokenEncoder(nn.Module):
 
         # At the end, we mask the word embeddings that correspond to
         # padding (padded tokens) by replacing them with 0s
-        mask = (token_lengths == 0)  # Find padded tokens
+        mask = token_lengths == 0  # Find padded tokens
         mask = mask.reshape(-1, 1)  # Represent mask as 1 list of tokens
         mask = mask.to(embedding.device)
         embedding = torch.masked_fill(embedding, mask, 0.0)

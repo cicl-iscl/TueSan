@@ -21,7 +21,6 @@ def classifier_loss(classifier, encoded, y_true):
 
     mask = torch.nonzero((y_true != 0)).flatten()
     y_true = y_true[mask].contiguous()
-    y_pred = y_pred[mask].contiguous()
     loss = F.cross_entropy(y_pred, y_true)
 
     with torch.no_grad():

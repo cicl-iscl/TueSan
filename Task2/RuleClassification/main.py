@@ -35,8 +35,6 @@ if __name__ == "__main__":
     print("\nLoad data")
     train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
-    
-    train_data = train_data[:128]
 
     # Exctract rules
     print("\nExtracting rules")
@@ -59,7 +57,7 @@ if __name__ == "__main__":
     )
 
     # Make vocabulary
-    print("Make vocab")
+    print("\nMake vocab")
     if not use_tag:
         vocabulary, rule_encoder, tag_encoder, char2index, index2char = make_vocabulary(
             train_dataset, use_tag=False
@@ -83,7 +81,7 @@ if __name__ == "__main__":
     # Build dataloaders
     batch_size = config["batch_size"]
     train_dataloader = DataLoader(
-        train_data_indexed[:128],
+        train_data_indexed,
         batch_size=batch_size,
         collate_fn=collate_fn,
         shuffle=True,
