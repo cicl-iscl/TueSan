@@ -48,4 +48,5 @@ Data can be accessed from `rummelhart` server, `/data/jingwen/sanskrit/`.
 
 ### To-Do
 ----
-- see if a mapping from UD features to analysis tags is doable
+- check missing predictions, prediction format
+- change informed approach to accomodate translit
