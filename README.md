@@ -48,5 +48,5 @@ Data can be accessed from `rummelhart` server, `/data/jingwen/sanskrit/`.
 
 ### To-Do
 ----
-- check missing predictions, prediction format
+- check missing predictions (shouldn't discard sentences in eval data), prediction format
 - change informed approach to accomodate translit
