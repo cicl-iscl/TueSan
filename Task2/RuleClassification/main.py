@@ -81,10 +81,7 @@ if __name__ == "__main__":
     # Build dataloaders
     batch_size = config["batch_size"]
     train_dataloader = DataLoader(
-        train_data_indexed,
-        batch_size=batch_size,
-        collate_fn=collate_fn,
-        shuffle=True,
+        train_data_indexed, batch_size=batch_size, collate_fn=collate_fn, shuffle=True,
     )
     eval_dataloader = DataLoader(
         eval_data_indexed,

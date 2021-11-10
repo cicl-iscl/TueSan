@@ -70,7 +70,9 @@ class Encoder(nn.Module):
 
         # Instantiate char embeddings -> token embedding converter
         if char2token_mode == "rnn":
-            self.char2token = LSTMChar2TokenEncoder(hidden_dim // 2, dropout=dropout)
+            self.char2token = LSTMChar2TokenEncoder(
+                hidden_dim, hidden_dim=hidden_dim // 2, dropout=dropout
+            )
         elif char2token_mode == "avg":
             self.char2token = AvgPoolChar2TokenEncoder()
         elif char2token_mode == "max":

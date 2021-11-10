@@ -77,7 +77,7 @@ class LSTM(nn.Module):
 
     def forward(self, inputs, lengths):
         # Pack sentences
-        lengths = torch.clamp(lengths, min=1)
+        lengths = torch.clamp(lengths, min=1).cpu()
         inputs = pack_padded_sequence(
             inputs, lengths, batch_first=True, enforce_sorted=False
         )

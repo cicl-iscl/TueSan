@@ -29,13 +29,13 @@ def lengths2mask(lengths, feature_dim=None):
         mask = mask.tile(lengths.shape[0], 1)
         # For each entry, first `length` indices are < `lengths
         # -> turn to 1, others 0
-        mask = mask < lengths.unsqueeze(-1)
-        mask = mask.bool()
+        mask = mask >= lengths.unsqueeze(-1)
 
         if feature_dim is not None:
             mask = mask.unsqueeze(-1)
-            # mask = mask.tile(1, 1, feature_dim)
+            mask = mask.tile(1, 1, feature_dim)
 
+        mask = mask.bool()
         return mask
 
 
@@ -93,7 +93,8 @@ class MaxPoolChar2TokenEncoder(nn.Module):
         char_embeddings = char_embeddings.masked_fill(mask, self.mask_value)
 
         # Sum max char dimension (feature-wise pooling)
-        token_embeddings = torch.amax(dim=1)
+        token_embeddings = torch.amax(char_embeddings, dim=1)
+
         # shape (batch, features)
 
         return token_embeddings
@@ -112,7 +113,6 @@ class LSTMChar2TokenEncoder(nn.Module):
         super().__init__()
         hidden_dim = hidden_dim if hidden_dim is not None else input_dim
 
-        self.num_layers = num_layers
         self.hidden_dim = hidden_dim
         # Instantiate LSTM
         self.rnn = nn.LSTM(
@@ -132,7 +132,7 @@ class LSTMChar2TokenEncoder(nn.Module):
         # have at least 1 character and overwrite padded tokens later
         #
         # Set minimum length = 1
-        token_lengths = torch.flatten(token_lengths)
+        token_lengths = torch.flatten(token_lengths).cpu()
         clamped_lengths = torch.clamp(token_lengths, min=1)
         # Pack sequences
         char_embeddings = pack_padded_sequence(
@@ -149,7 +149,7 @@ class LSTMChar2TokenEncoder(nn.Module):
         # padding (padded tokens) by replacing them with 0s
         mask = token_lengths == 0  # Find padded tokens
         mask = mask.reshape(-1, 1)  # Represent mask as 1 list of tokens
-        mask = mask.to(embedding.device)
-        embedding = torch.masked_fill(embedding, mask, 0.0)
+        mask = mask.to(hidden.device)
+        token_embeddings = torch.masked_fill(hidden, mask, 0.0)
 
-        return embedding
+        return token_embeddings
