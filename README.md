@@ -43,7 +43,7 @@ poetry shell
       └── wsmp_dev.json
       
 ```
-Data can be accessed from `rummelhart` server, `/data/jingwen/sanskrit/`.
+Data can be accessed from the server, `/data/jingwen/sanskrit/`.
 
 
 ### To-Do
