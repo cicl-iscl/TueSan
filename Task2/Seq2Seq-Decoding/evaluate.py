@@ -6,6 +6,8 @@ from sklearn.metrics import accuracy_score
 from vocabulary import SOS_TOKEN, EOS_TOKEN, PAD_TOKEN
 from decoding import greedy_decoding, informed_decoding
 
+from uni2intern import internal_transliteration_to_unicode as to_uni
+
 
 def get_allowed_labels(raw_inputs, num_sents, num_tokens, tag_encoder, dictionary):
     """
@@ -227,5 +229,16 @@ def print_metrics(predictions, ground_truth):
     stem_accuracy = accuracy_score(stems_pred, stems_true)
 
     print()
-    print(f"Tag Accuracy: {tag_accuracy}")
-    print(f"Stem Accuracy: {stem_accuracy}")
+    print(f"Tag Accuracy: {tag_accuracy:.4f}")
+    print(f"Stem Accuracy: {stem_accuracy:.4f}")
+
+
+def format_predictions(predictions, translit=False):
+    preds = []
+    tags, stems = zip(*predictions)
+    for sent_stems, sent_tags in zip(stems, tags):
+        if translit:
+            sent_stems = [to_uni(x) for x in sent_stems]
+        sentence = list(zip(sent_stems, sent_tags))
+        preds.append(sentence)
+    return preds
