@@ -1,16 +1,23 @@
 import torch
 import json
 
+import time
+import pprint
+
+pp = pprint.PrettyPrinter(indent=4)
+
 from functools import partial
 from torch.utils.data import DataLoader
 
-from helpers import load_data, load_sankrit_dictionary
+from helpers import load_data, save_task2_predictions
 from vocabulary import make_vocabulary, PAD_TOKEN
 from dataset import index_dataset, collate_fn, eval_collate_fn
 from model import build_model, build_optimizer, save_model
 from training import train
-from evaluate import evaluate_model, print_metrics
+from evaluate import evaluate_model, print_metrics, format_predictions
 from extract_rules import get_token_rule_mapping, get_rules
+from scoring import evaluate
+
 
 # Ignore warning (who cares?)
 import warnings
@@ -22,47 +29,53 @@ if __name__ == "__main__":
     with open("config.cfg") as config:
         config = json.load(config)
 
+    translit = config["translit"]
+
     # Load data
     print("\nLoad data")
-    train_data = load_data(config["train_path"])
-    eval_data = load_data(config["eval_path"])
+    train_data = load_data(config["train_path"], translit)
+    eval_data = load_data(config["eval_path"], translit)
 
     # Exctract rules
     print("\nExtracting rules")
     use_tag = config["rules_use_tag"]
     min_rule_frequency = config["rules_min_frequency"]
-    rules = get_rules(train_data, use_tag=use_tag)
+    rules = get_rules(train_data, use_tag=use_tag, translit=translit)
     rules = [rule for rule, count in rules.items() if count > min_rule_frequency]
     print(f"Extracted {len(rules)} rules.")
 
     # Convert train dataset
     print("\nConverting train dataset")
-    train_data = get_token_rule_mapping(train_data, rules, use_tag=use_tag)
+    train_dataset = get_token_rule_mapping(
+        train_data, rules, use_tag=use_tag, translit=translit
+    )
 
     # Convert eval dataset
     print("\nConverting eval dataset")
-    eval_data = get_token_rule_mapping(eval_data, rules, use_tag=use_tag)
+    eval_dataset = get_token_rule_mapping(
+        eval_data, rules, use_tag=use_tag, translit=translit
+    )
 
     # Make vocabulary
     print("Make vocab")
     if not use_tag:
         vocabulary, rule_encoder, tag_encoder, char2index, index2char = make_vocabulary(
-            train_data, use_tag=False
+            train_dataset, use_tag=False
         )
     else:
         vocabulary, rule_encoder, char2index, index2char = make_vocabulary(
-            train_data, use_tag=True
+            train_dataset, use_tag=True
         )
         tag_encoder = None
 
     # Index data
     print("\nIndex train data")
     train_data_indexed = index_dataset(
-        train_data, char2index, rule_encoder, tag_encoder=tag_encoder
+        train_dataset, char2index, rule_encoder, tag_encoder=tag_encoder
     )
     print("\nIndex eval data")
     eval_data_indexed = index_dataset(
-        eval_data, char2index, rule_encoder, tag_encoder=tag_encoder, eval=True
+        eval_dataset, char2index, rule_encoder, tag_encoder=tag_encoder, eval=True
     )
 
     # Build dataloaders
@@ -105,6 +118,9 @@ if __name__ == "__main__":
     print("\nTrain")
     epochs = config["epochs"]
     print(f"Training for {epochs} epochs\n")
+
+    start = time.time()
+
     model, optimizer = train(model, optimizer, train_dataloader, epochs, device)
 
     # Save model
@@ -122,8 +138,29 @@ if __name__ == "__main__":
     )
 
     # Evaluate
-    print("\nEvaluating")
+    print("\nPredicting")
     eval_predictions = evaluate_model(
         model, eval_dataloader, device, rules, rule_encoder, tag_encoder
     )
-    print_metrics(eval_predictions, eval_data)
+    formatted_predictions = format_predictions(eval_predictions)
+    pp.pprint(formatted_predictions[:2])
+
+    duration = time.time() - start
+    print(f"Duration: {duration:.2f} seconds.\n")
+
+    # Create submission
+    print("Create submission files")
+    save_task2_predictions(formatted_predictions, duration)
+
+    # Evaluate
+    print("\nEvaluating")
+    print_metrics(eval_predictions, eval_dataset)
+    # Task 2 Evaluation
+    scores = evaluate(eval_data[1], formatted_predictions, task_id="t2")
+
+# pp.pprint(formatted_predictions[0])
+# print(type(formatted_predictions))
+# print(type(formatted_predictions[0]))
+# pp.pprint(eval_data[0])
+# print(type(eval_data))
+# print(type(eval_data[0]))

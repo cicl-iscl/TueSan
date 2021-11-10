@@ -9,6 +9,8 @@ from extract_rules import UNK_RULE
 from vocabulary import UNK_TOKEN
 from collections import defaultdict
 
+from uni2intern import internal_transliteration_to_unicode as to_uni
+
 
 def evaluate_model(model, eval_dataloader, device, rules, rule_encoder, tag_encoder):
     index2rule = defaultdict(lambda: UNK_RULE)
@@ -116,5 +118,16 @@ def print_metrics(predictions, ground_truth):
     stem_accuracy = accuracy_score(stems_pred, stems_true)
 
     print()
-    print(f"Tag Accuracy: {tag_accuracy}")
-    print(f"Stem Accuracy: {stem_accuracy}")
+    print(f"Tag Accuracy: {tag_accuracy:.4f}")
+    print(f"Stem Accuracy: {stem_accuracy:.4f}")
+
+
+def format_predictions(predictions, translit=False):
+    preds = []
+    tags, stems = zip(*predictions)
+    for sent_stems, sent_tags in zip(stems, tags):
+        if translit:
+            sent_stems = [to_uni(x) for x in sent_stems]
+        sentence = list(zip(sent_stems, sent_tags))
+        preds.append(sentence)
+    return preds
