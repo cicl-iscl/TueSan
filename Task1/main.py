@@ -57,6 +57,15 @@ if __name__ == "__main__":
     else:
         filename = "unicode"
 
+    # # ---- to remove ----
+    # dat = {}
+    # with open(config["train_path"], encoding="utf-8") as train_json:
+    #     dat = json.load(train_json)
+    # train_dataset = construct_dataset(dat[:2], translit, config["train_graphml"])
+    # pp.pprint(train_dataset[0])
+    # pp.pprint(train_dataset[1])
+    # # -------------------
+
     # Construct train data, discarded 457 sents
     if Path(config["out_folder"], f"{filename}_train.pickle").is_file():
         with open(Path(config["out_folder"], f"{filename}_train.pickle"), "rb") as f:
@@ -69,7 +78,7 @@ if __name__ == "__main__":
         with open(Path(config["out_folder"], f"{filename}_train.pickle"), "wb") as outf:
             pickle.dump(train_dataset, outf)
 
-    # Construct eval data, discarded 38 sentences
+    # Construct eval data, could have discarded 38 sentences, but didn't
     if Path(config["out_folder"], f"{filename}_dev.pickle").is_file():
         with open(Path(config["out_folder"], f"{filename}_dev.pickle"), "rb") as f:
             eval_dataset = pickle.load(f)
@@ -84,8 +93,8 @@ if __name__ == "__main__":
             pickle.dump(eval_dataset, outf)
 
     # Display an example datapoint
-    # pp.pprint(train_dataset[-1])
-    # pp.pprint(eval_dataset[-1])
+    pp.pprint(train_dataset[-1])
+    pp.pprint(eval_dataset[-1])
 
     # Index data
     logger.info("Index train data")
@@ -135,7 +144,7 @@ if __name__ == "__main__":
         model, criterion, optimizer, train_dataloader, epochs, device
     )
 
-    # # Save model
+    # # # Save model
     name = config["name"]
     save_model(model, optimizer, vocabulary, char2index, index2char, name)
 

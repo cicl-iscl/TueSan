@@ -1,7 +1,7 @@
 """Generate training data for Task 1
-    with or without extra translit.
+	with or without extra translit.
 
-    For alignment we need to also convert the tokens.
+	For alignment we need to also convert the tokens.
 """
 
 import numpy as np
@@ -21,6 +21,7 @@ def get_data(datapoint, translit=False):
     unsandhied = " ".join(unsandhied_tokenized)
     if translit:
         unsandhied = to_intern(unsandhied)
+        unsandhied = unsandhied.replace(" ", "_")  # for alignment
     # Punctuation are not removed from input
 
     return sandhied, unsandhied, unsandhied_tokenized
