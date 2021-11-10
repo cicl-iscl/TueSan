@@ -16,6 +16,7 @@ def build_model(config, vocabulary, tag_encoder):
     embedding_size = config["embedding_size"]
     encoder_hidden_size = config["encoder_hidden_size"]
     encoder_max_ngram = config["encoder_max_ngram"]
+    encoder_char2token_mode = config["encoder_char2token_mode"]
     decoder_hidden_dim = config["decoder_hidden_dim"]
     decoder_num_layers = config["decoder_num_layers"]
     classifier_hidden_dim = config["classifier_hidden_dim"]
@@ -29,6 +30,7 @@ def build_model(config, vocabulary, tag_encoder):
         embedding_size,
         encoder_hidden_size,
         encoder_max_ngram,
+        char2token_mode=encoder_char2token_mode,
         dropout=dropout,
     )
 

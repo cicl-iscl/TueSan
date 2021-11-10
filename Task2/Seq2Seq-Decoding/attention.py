@@ -94,7 +94,7 @@ class BahdanauAttention(nn.Module):
         mask = torch.arange(timesteps)
         mask = mask.expand(len(encoder_length), timesteps)
         mask = mask.to(encoder_length.device)
-        mask = mask < encoder_length.unsqueeze(1)
+        mask = mask >= encoder_length.unsqueeze(1)
         mask = mask.to(encoder_out.device)
 
         # Mask scores that correspond to padding

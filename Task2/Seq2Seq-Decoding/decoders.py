@@ -77,7 +77,7 @@ class RecurrentDecoder(nn.Module):
 
         # Instantiate MLP for making predictions
         self.prediction_layer = nn.Sequential(
-            nn.Linear(2 * hidden_size, hidden_size),
+            nn.Linear(encoder_output_size + hidden_size, hidden_size),
             nn.Dropout(p=dropout),
             nn.ReLU(),
             nn.Linear(hidden_size, vocab_size),
