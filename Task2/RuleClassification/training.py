@@ -37,19 +37,19 @@ def get_loss(batch, encoder, classifiers, device):
     tokens = batch[0].to(device)
 
     # Encode input sentence
-    encoded, char_embeddings, token_lengths = encoder(tokens)
+    token_embeddings = encoder(tokens)
 
     # Predict rules
     rules_true = batch[1].long().to(device)
     rule_loss, rule_accuracy, y_pred_rule = classifier_loss(
-        classifiers["rules"], encoded, rules_true
+        classifiers["rules"], token_embeddings, rules_true
     )
 
     # Predict tags and calculate loss (optional)
     if len(batch) == 3:
         tags_true = batch[2].long().to(device)
         tag_loss, tag_accuracy, y_pred_tag = classifier_loss(
-            classifiers["tags"], encoded, tags_true
+            classifiers["tags"], token_embeddings, tags_true
         )
     else:
         tag_loss = 0.0

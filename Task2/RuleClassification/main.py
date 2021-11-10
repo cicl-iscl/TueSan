@@ -35,6 +35,8 @@ if __name__ == "__main__":
     print("\nLoad data")
     train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
+    
+    train_data = train_data[:128]
 
     # Exctract rules
     print("\nExtracting rules")

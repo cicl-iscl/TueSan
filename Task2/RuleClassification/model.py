@@ -16,8 +16,7 @@ def build_model(config, vocabulary, classes, names):
     embedding_size = config["embedding_size"]
     encoder_hidden_size = config["encoder_hidden_size"]
     encoder_max_ngram = config["encoder_max_ngram"]
-    decoder_hidden_dim = config["decoder_hidden_dim"]
-    decoder_num_layers = config["decoder_num_layers"]
+    encoder_char2token_mode = config["encoder_char2token_mode"]
     classifier_hidden_dim = config["classifier_hidden_dim"]
     classifer_num_layers = config["classifer_num_layers"]
     dropout = config["dropout"]
@@ -29,7 +28,8 @@ def build_model(config, vocabulary, classes, names):
         embedding_size,
         encoder_hidden_size,
         encoder_max_ngram,
-        dropout=dropout,
+        char2token_mode = encoder_char2token_mode,
+        dropout=dropout
     )
 
     # Rule/Tag classifier -> morphological rules/tags
