@@ -40,6 +40,6 @@ def make_predictions(model, eval_dataloader, eval_dataset, device, translit=Fals
         else:
             predicted_unsandhied = reconstruct_unsandhied(tokens, allowed_words)
             predictions.append(predicted_unsandhied)
-            true_unsandhied.append(sentence["unsandhied"])
+            true_unsandhied.append(sentence["unsandhied"].split())
 
     return predictions, true_unsandhied, split_predictions
