@@ -39,7 +39,7 @@ def find_sandhis(sandhied_syllables, unsandhied_syllables):
             i += 1
             j = i
         elif unsandhied_syllables[i][:-1] == sandhied_syllables[i][:-1]:
-            for char in sandhied_syllables[:-1]:
+            for char in sandhied_syllables[i][:-1]:
                 sandhis.append(Sandhi(char, char, "", "keep"))
             if i + 1 < max_idx:
                 sandhis.append(
