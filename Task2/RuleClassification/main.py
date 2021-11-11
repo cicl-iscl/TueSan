@@ -163,9 +163,6 @@ if __name__ == "__main__":
     print("\nEvaluating")
     print_metrics(eval_predictions, eval_dataset)
     # Task 2 Evaluation
-    print(len(eval_data[1]))
-    print(len(formatted_predictions))
-    print(eval_data[1])
     scores = evaluate(
         [dp[1] for dp in eval_data], formatted_predictions, task_id="t2"
     )
