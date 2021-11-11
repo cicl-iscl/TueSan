@@ -20,7 +20,6 @@ def get_data(datapoint, translit=False):
     sandhied, unsandhied_tokenized = get_task1_IO(datapoint, translit=translit)
     unsandhied = " ".join(unsandhied_tokenized)
     if translit:
-        unsandhied = to_intern(unsandhied)
         unsandhied = unsandhied.replace(" ", "_")  # for alignment
     # Punctuation are not removed from input
 
@@ -70,19 +69,8 @@ def tokenize(sandhied, unsandhied):
     return tokens
 
 
-def remove_trailing_syllables(tokens, unsandhied_tokenized, translit=False):
-    if translit:
-        if (
-            len(tokens) > len(unsandhied_tokenized)
-            and len(tokens) > 2
-            and to_intern(unsandhied_tokenized[-1]).endswith(tokens[-1])
-            and [to_intern(t) for t in unsandhied_tokenized[:3]]
-            == tokens[-2].strip()[:3]
-        ):
-
-            tokens = tokens[:-1]
-
-    elif (
+def remove_trailing_syllables(tokens, unsandhied_tokenized):
+	if (
         len(tokens) > len(unsandhied_tokenized)
         and len(tokens) > 2
         and unsandhied_tokenized[-1].endswith(tokens[-1])

@@ -4,8 +4,10 @@ import pickle
 import torch
 from torch.utils.data import DataLoader
 
-from helpers import load_data, load_sankrit_dictionary, check_specific_sent
+from helpers import load_data, load_sankrit_dictionary
 from vocabulary import make_vocabulary
+
+# from encode_syllables import make_syll_vocabulary
 from generate_train_data import construct_dataset
 from dataset import index_dataset, collate_fn, eval_collate_fn
 from model import build_model, get_loss, build_optimizer, save_model, load_model
@@ -28,25 +30,26 @@ if __name__ == "__main__":
 
     translit = config["translit"]
 
-    # Load data, data is a dictionary indexed by sent_id
+    # Load data
     logger.info("Load data")
     train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
 
-    # Display an example sentence
-    # sent = check_specific_sent(eval_data, 582923)
-    # pp.pprint(sent)
-
     # Make vocabulary
     # whitespaces are translated to '_' and treated as a normal character
     logger.info("Make vocab")
-    vocabulary, char2index, index2char, char2uni = make_vocabulary(train_data.values())
+    vocabulary, char2index, index2char = make_vocabulary(train_data)
 
     logger.debug(f"{len(vocabulary)} chars in vocab:\n{vocabulary}")
 
+    # Make syllable vocab...
+    # logger.info("Collecting syllables")
+    # syll_vocab, syll2index, index2syll = make_syll_vocabulary(train_data)
+    # logger.debug(f"{len(syll_vocab)} unique syllables in vocab:\n{syll_vocab}")
+
     # # Double check vocab of dev
-    # eval_vocabulary, _, _, _ = \
-    #   make_vocabulary(eval_data.values())
+    # eval_vocabulary, _, _= \
+    #   make_vocabulary(eval_data)
     # for char in eval_vocabulary:
     #   if char not in vocabulary:
     #       logger.warning(f"{char} not in train vocab.")
@@ -56,15 +59,6 @@ if __name__ == "__main__":
         filename = "translit"
     else:
         filename = "unicode"
-
-    # # ---- to remove ----
-    # dat = {}
-    # with open(config["train_path"], encoding="utf-8") as train_json:
-    #     dat = json.load(train_json)
-    # train_dataset = construct_dataset(dat[:2], translit, config["train_graphml"])
-    # pp.pprint(train_dataset[0])
-    # pp.pprint(train_dataset[1])
-    # # -------------------
 
     # Construct train data, discarded 457 sents
     if Path(config["out_folder"], f"{filename}_train.pickle").is_file():
