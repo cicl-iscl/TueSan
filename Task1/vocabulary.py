@@ -21,8 +21,7 @@ def make_vocabulary(data):
     vocabulary = set()
 
     for joint_sent, _ in data:
-        # whitespaces to underscores
-        joint_sent = joint_sent.replace(" ", "_")
+        # whitespaces are kept
         # Just add all characters in input sentence to vocab
         vocabulary.update(set(joint_sent))
 
