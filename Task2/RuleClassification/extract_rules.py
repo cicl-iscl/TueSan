@@ -14,7 +14,6 @@ UNK_RULE = "<Other>"
 
 
 def get_token_stem_pairs(data):
-    print(data[0])
     token_stem_pairs = []
 
     for sentence, labels in data:
