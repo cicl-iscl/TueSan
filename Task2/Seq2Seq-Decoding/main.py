@@ -16,12 +16,14 @@ from extract_rules import get_token_rule_mapping, get_rules
 
 # Ignore warning (who cares?)
 import warnings
+
 warnings.filterwarnings("ignore")
 
 # Parse config file
 import argparse
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--cfg", type=str, default = "config.cfg")
+parser.add_argument("--cfg", type=str, default="config.cfg")
 config_file = parser.parse_args().cfg
 
 
@@ -35,7 +37,7 @@ if __name__ == "__main__":
     print("\nLoad data")
     train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
-    
+
     # Exctract rules
     print("\nExtracting rules")
     rules = get_rules(train_data, use_tag=True)
@@ -104,10 +106,10 @@ if __name__ == "__main__":
 
     # Evaluate
     mode = config["eval_mode"]
-    #dictionary_path = config.get("dictionary_path", None)
-    #if dictionary_path is None:
+    # dictionary_path = config.get("dictionary_path", None)
+    # if dictionary_path is None:
     #    dictionary = None
-    #else:
+    # else:
     #    dictionary = load_sankrit_dictionary(dictionary_path)
 
     eval_predictions = evaluate_model(
