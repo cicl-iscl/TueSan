@@ -39,9 +39,10 @@ def index_dataset(data, char2index, tag_encoder, eval=False):
 
         # Only save sentences if number of input tokens
         # is the same as number of ground truth stems/labels
-        if not eval and len(input) != len(tags) or len(input) != len(stems):
-            discarded += 1
-            continue
+        if not eval:
+            if len(input) != len(tags) or len(input) != len(stems):
+                discarded += 1
+                continue
 
         # Index input sentence
         # Discard sentences with unknown characters
