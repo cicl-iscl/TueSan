@@ -36,7 +36,7 @@ if __name__ == "__main__":
     eval_data = load_data(config["eval_path"], translit)
 
     # Make vocabulary
-    # whitespaces are translated to '_' and treated as a normal character
+    # whitespaces are kept and treated as a normal character
     logger.info("Make vocab")
     vocabulary, char2index, index2char = make_vocabulary(train_data)
 

@@ -26,10 +26,49 @@ def find_syllables(joint_sent, ground_truth):
 
 
 def find_sandhis(sandhied_syllables, unsandhied_syllables):
-    pass
+    """Compare two lists of syllables to find Sandhi rules:"""
+    assert len(unsandhied_syllables) >= len(sandhied_syllables)
+    sandhis = []
+    i = 0
+    j = 0
+    max_idx = len(sandhied_syllables)
+    while i < max_idx:
+        if unsandhied_syllables[i] == sandhied_syllables[i]:
+            for char in sandhied_syllables[i]:
+                sandhis.append(Sandhi(char, char, "", "keep"))
+            i += 1
+            j = i
+        elif unsandhied_syllables[i][:-1] == sandhied_syllables[i][:-1]:
+            for char in sandhied_syllables[:-1]:
+                sandhis.append(Sandhi(char, char, "", "keep"))
+            if i + 1 < max_idx:
+                sandhis.append(
+                    Sandhi(
+                        sandhied_syllables[i][:-1],
+                        unsandhied_syllables[i][:-1],
+                        sandhied_syllables[i + 1][0],
+                        "replace",
+                    )
+                )
+            i += 1
+            j = i
+        i += 1
+
+    return sandhis
 
 
-# class Sandhi(object):
+class Sandhi(object):
+    # __slots__ = ["current_char", "to_char", "next_char", "action"]
+
+    def __init__(self, current_char, to_char, next_char, action):
+        self.current_char = current_char
+        self.to_char = to_char
+        self.next_char = next_char
+        self.action = action
+
+    def __str__(self):
+        attrs = vars(self)
+        return " ".join("%s: %s" % item for item in attrs.items())
 
 
 if __name__ == "__main__":
@@ -61,4 +100,6 @@ if __name__ == "__main__":
         logger.info(i[0])
         logger.info(" ".join(i[1]))
         sandhied_syllables, unsandhied_syllables = find_syllables(*i)
-        find_sandhis(sandhied_syllables, unsandhied_syllables)
+        sandhis = find_sandhis(sandhied_syllables, unsandhied_syllables)
+        for sandhi in sandhis:
+            logger.info(sandhi)
