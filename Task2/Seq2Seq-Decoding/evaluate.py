@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 from tqdm import tqdm
 from functools import partial
@@ -20,8 +21,8 @@ def get_allowed_labels(raw_inputs, tag_encoder, rules):
     allowed_stems = []
     allowed_tags = []
 
-    for sent in range(raw_inputs):
-        for token in range(sent):
+    for sent in raw_inputs:
+        for token in sent:
             stems, tags = generate_stems_from_rules(token, rules)
             tags = [tag for tag in tags if tag in tag_encoder.classes_]
 
@@ -36,7 +37,6 @@ def evaluate_batch(
 ):
     raw_inputs, inputs, stems, tags = batch
     stems, tags = stems.long(), tags.long()
-    num_sents, num_tokens = stems.shape[:2]
 
     inputs = inputs.to(device)
     stems = stems.to(device)
@@ -52,7 +52,7 @@ def evaluate_batch(
 
     if mode == "informed":
         allowed_stems, allowed_tags = get_allowed_labels(
-            raw_inputs, num_sents, num_tokens, tag_encoder, rules
+            raw_inputs, tag_encoder, rules
         )
     
     # Get total number of tokens
@@ -75,10 +75,6 @@ def evaluate_batch(
     # For informed decoding, we choose the allowed label
     # with highest prediction score
     elif mode == "informed":
-        # Reshape prediction scores to have 2 dimensions, 1 for
-        # tokens and 1 for prediction scores
-        # num_classes = y_pred_tags.shape[-1]
-        # y_pred_tags = y_pred_tags.reshape(-1, num_classes)
         predicted_tags = []
 
         # Look at each token individually
@@ -101,84 +97,57 @@ def evaluate_batch(
                 predicted_tags.append(best_tag)
         
         y_pred_tags = np.array(predicted_tags)
-        # y_pred_tags = torch.LongTensor(predicted_tags)
-        # y_pred_tags = y_pred_tags.reshape(num_sents, num_tokens)
     
     predicted_tags = tag_encoder.inverse_transform(y_pred_tags)
-    
-    prediction_pointer = 0
-    batch_tag_predictions = []
-    for sent in raw_inputs:
-        sent_predicted_tags = []
-        for token in sent:
-            sent_predicted_tags.append(predicted_tags[prediction_pointer])
-            prediction_pointer += 1
-        batch_tag_predictions.append(sent_predicted_tags)
-    
-    assert prediction_pointer == len(predicted_tags)
-    
-    
-    # Convert predicted tag indices to the corresponding string
-    #batch_tag_predictions = []
-    #for predicted_tags, length in zip(y_pred_tags, tag_lengths):
-    #    # Only keep as many tags as we have tokens
-    #    # = remove padding
-    #    predicted_tags = predicted_tags[:length]
-    #    predicted_tags = predicted_tags.cpu().numpy()
-    #    # Convert index -> string
-    #    predicted_tags = tag_encoder.inverse_transform(predicted_tags)
-    #    # Save predicted tags
-    #    predicted_tags = predicted_tags.tolist()
-    #    batch_tag_predictions.append(predicted_tags)
 
     # Predict stems
-    num_sents, num_tokens = stems.shape[:2]
-
     if mode == "informed":
         predicted_stems = informed_decoding(
-            decoder, encoded, char_embeddings, token_lengths, allowed_stems, char2index
+            decoder, encoded, char_embeddings, token_lengths, allowed_stems, char2index, index2char
         )
 
     elif mode == "greedy":
         predicted_stems = greedy_decoding(
             decoder, encoded, char_embeddings, token_lengths, char2index
         )
-
-    # Convert predicted indices to actual words (stems)
-    predicted_stems = predicted_stems.reshape(num_sents, num_tokens, -1)
-    batch_stem_predictions = []
-    # Treat each sentence separately
-    # i.e. record predicted stems for each token in sentence
-    for sentence_predictions, num_tokens in zip(predicted_stems, tag_lengths):
-        sentence_stem_predictions = []
-
-        # Iterate over predicted indices for each token in sentence
-        for character_indices in sentence_predictions:
-            current_stem = []
-
+        
+    assert predicted_stems.shape[0] == num_tokens
+    
+    decoded_stems = []
+    for char_indices in predicted_stems:
+        current_stem = []
+        for char_index in char_indices:
             # Convert current index to character string
-            for character_index in character_indices:
-                character = index2char[character_index.item()]
-
-                # If we encounte end of sequence, finish the current
-                # stem
-                if character == EOS_TOKEN:
-                    break
-                # Otherwise, save current character
-                else:
-                    current_stem.append(character)
-
-            # Save complete stem
-            sentence_stem_predictions.append("".join(current_stem))
-
-        # Only keep as many stems as there are words in the sentence
-        # = remove padding
-        sentence_stem_predictions = sentence_stem_predictions[:num_tokens]
-        batch_stem_predictions.append(sentence_stem_predictions)
+            character = index2char[char_index.item()]
+            
+            # If we encounte end of sequence, finish the current stem
+            if character == EOS_TOKEN:
+                break
+            # Otherwise, save current character
+            else:
+                current_stem.append(character)
+        decoded_stems.append("".join(current_stem))
+        
+    prediction_pointer = 0
+    batch_tag_predictions = []
+    batch_stem_predictions = []
+    for sent in raw_inputs:
+        sent_predicted_tags = []
+        sent_predicted_stems = []
+        for token in sent:
+            sent_predicted_tags.append(predicted_tags[prediction_pointer])
+            sent_predicted_stems.append(decoded_stems[prediction_pointer])
+            prediction_pointer += 1
+        
+        batch_tag_predictions.append(sent_predicted_tags)
+        batch_stem_predictions.append(sent_predicted_stems)
+    
+    assert prediction_pointer == len(predicted_tags) == len(decoded_stems)
 
     # Save predicted tags and stems for current minibatch
     batch_predictions = zip(batch_tag_predictions, batch_stem_predictions)
     batch_predictions = list(batch_predictions)
+    
     return batch_predictions
 
 
@@ -195,7 +164,7 @@ def evaluate_model(
     # Check arguments
     if mode not in ["greedy", "informed"]:
         raise ValueError(f"Unknown evaluation mode: {mode}")
-    if mode == "informed" and dictionary is None:
+    if mode == "informed" and rules is None:
         raise RuntimeError("Evaluation mode is 'informed' but no dictionary given")
 
     predictions = []
