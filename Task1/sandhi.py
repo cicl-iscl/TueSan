@@ -44,8 +44,8 @@ def find_sandhis(sandhied_syllables, unsandhied_syllables):
             if i + 1 < max_idx:
                 sandhis.append(
                     Sandhi(
-                        sandhied_syllables[i][:-1],
-                        unsandhied_syllables[i][:-1],
+                        sandhied_syllables[i][-1],
+                        unsandhied_syllables[i][-1],
                         sandhied_syllables[i + 1][0],
                         "replace",
                     )
