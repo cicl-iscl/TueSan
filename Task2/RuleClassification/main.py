@@ -52,7 +52,9 @@ if __name__ == "__main__":
 
     # Convert eval dataset
     print("\nConverting eval dataset")
-    eval_dataset = get_token_rule_mapping(eval_data, rules, use_tag=use_tag)
+    eval_dataset = get_token_rule_mapping(
+        eval_data, rules, use_tag=use_tag, eval=True
+    )
 
     # Make vocabulary
     print("\nMake vocab")
