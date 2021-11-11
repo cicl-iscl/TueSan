@@ -1,7 +1,7 @@
 """Generate training data for Task 1
-	with or without extra translit.
+    with or without extra translit.
 
-	For alignment we need to also convert the tokens.
+    For alignment we need to also convert the tokens.
 """
 
 import numpy as np
@@ -70,7 +70,7 @@ def tokenize(sandhied, unsandhied):
 
 
 def remove_trailing_syllables(tokens, unsandhied_tokenized):
-	if (
+    if (
         len(tokens) > len(unsandhied_tokenized)
         and len(tokens) > 2
         and unsandhied_tokenized[-1].endswith(tokens[-1])
