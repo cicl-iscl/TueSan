@@ -51,10 +51,8 @@ def evaluate_batch(
     tag_classifier.eval()
 
     if mode == "informed":
-        allowed_stems, allowed_tags = get_allowed_labels(
-            raw_inputs, tag_encoder, rules
-        )
-    
+        allowed_stems, allowed_tags = get_allowed_labels(raw_inputs, tag_encoder, rules)
+
     # Get total number of tokens
     num_tokens = sum([len(sent) for sent in raw_inputs])
 
@@ -95,31 +93,37 @@ def evaluate_batch(
                 best_score_index = torch.argmax(scores).item()
                 best_tag = current_allowed_tags[best_score_index]
                 predicted_tags.append(best_tag)
-        
+
         y_pred_tags = np.array(predicted_tags)
-    
+
     predicted_tags = tag_encoder.inverse_transform(y_pred_tags)
 
     # Predict stems
     if mode == "informed":
         predicted_stems = informed_decoding(
-            decoder, encoded, char_embeddings, token_lengths, allowed_stems, char2index, index2char
+            decoder,
+            encoded,
+            char_embeddings,
+            token_lengths,
+            allowed_stems,
+            char2index,
+            index2char,
         )
 
     elif mode == "greedy":
         predicted_stems = greedy_decoding(
             decoder, encoded, char_embeddings, token_lengths, char2index
         )
-        
+
     assert predicted_stems.shape[0] == num_tokens
-    
+
     decoded_stems = []
     for char_indices in predicted_stems:
         current_stem = []
         for char_index in char_indices:
             # Convert current index to character string
             character = index2char[char_index.item()]
-            
+
             # If we encounte end of sequence, finish the current stem
             if character == EOS_TOKEN:
                 break
@@ -127,7 +131,7 @@ def evaluate_batch(
             else:
                 current_stem.append(character)
         decoded_stems.append("".join(current_stem))
-        
+
     prediction_pointer = 0
     batch_tag_predictions = []
     batch_stem_predictions = []
@@ -138,16 +142,16 @@ def evaluate_batch(
             sent_predicted_tags.append(predicted_tags[prediction_pointer])
             sent_predicted_stems.append(decoded_stems[prediction_pointer])
             prediction_pointer += 1
-        
+
         batch_tag_predictions.append(sent_predicted_tags)
         batch_stem_predictions.append(sent_predicted_stems)
-    
+
     assert prediction_pointer == len(predicted_tags) == len(decoded_stems)
 
     # Save predicted tags and stems for current minibatch
     batch_predictions = zip(batch_tag_predictions, batch_stem_predictions)
     batch_predictions = list(batch_predictions)
-    
+
     return batch_predictions
 
 

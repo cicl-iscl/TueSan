@@ -33,7 +33,13 @@ def safe_max(vals):
 # Informed decoding constrains the stems that can be predicted
 # to a given list of possible stems
 def informed_decoding(
-    decoder, encoder_output, char_embeddings, token_lengths, allowed_stems, char2index, index2char
+    decoder,
+    encoder_output,
+    char_embeddings,
+    token_lengths,
+    allowed_stems,
+    char2index,
+    index2char,
 ):
     # Decoder: Trained neural network for predicting stems
     # encoder_output: Embedded input sentence
@@ -42,7 +48,7 @@ def informed_decoding(
     #                 Taken from a dictionary
     #
     # Flatten encoder output: Each batch element corresponds to exactly 1 token
-    decoder_input = encoder_output.flatten(end_dim = -2)
+    decoder_input = encoder_output.flatten(end_dim=-2)
     batch_size = decoder_input.shape[0]
     # We have to make sure that tokens and allowed stems are
     # correctly aligned
