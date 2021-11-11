@@ -13,14 +13,12 @@ from uni2intern import unicode_to_internal_transliteration as to_intern
 UNK_RULE = "<Other>"
 
 
-def get_token_stem_pairs(data, translit=False):
+def get_token_stem_pairs(data):
     token_stem_pairs = []
 
     for sentence, labels in data:
         tokens = sentence.split()
         stems, tags = zip(*labels)
-        if translit:
-            stems = [to_intern(stem) for stem in stems]
 
         if len(tokens) != len(stems):
             continue
@@ -76,9 +74,9 @@ def get_rule(token, stem):
     return prefix, suffix, stem_suffix
 
 
-def get_rules(data, use_tag=True, translit=False):
+def get_rules(data, use_tag=True):
     # Make pairs (token, stem, tag)
-    token_stem_pairs = get_token_stem_pairs(data, translit)
+    token_stem_pairs = get_token_stem_pairs(data)
 
     # Extract rule from each (token, stem) pair, if possible
     rules = defaultdict(int)
@@ -132,15 +130,13 @@ def get_applicable_rules(token, stem, tag, rules, check_tag=True):
     return applicable_rules
 
 
-def get_token_rule_mapping(data, rules, use_tag=True, translit=False):
+def get_token_rule_mapping(data, rules, use_tag=True):
 
     token_rule_mapping = []
 
     for sentence, labels in tqdm(data):
         sentence = sentence.split()
         stems, tags = zip(*labels)
-        if translit:
-            stems = [to_intern(stem) for stem in stems]
 
         if len(sentence) != len(stems):
             continue
@@ -168,14 +164,14 @@ def get_token_rule_mapping(data, rules, use_tag=True, translit=False):
 
 def generate_stems_from_rules(token, rules):
     candidate_stems, candidate_tags = set(), set()
-    
+
     for rule in rules:
         applicable, candidate_stem = rule_is_applicable(rule, token)
         if applicable:
             candidate_stems.add(candidate_stem)
             candidate_tags.add(rule[3])
-    
+
     candidate_stems = list(sorted(candidate_stems))
     candidate_tags = list(sorted(candidate_tags))
-    
+
     return candidate_stems, candidate_tags

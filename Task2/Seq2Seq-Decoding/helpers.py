@@ -59,14 +59,16 @@ def get_task2_IO(json_entry, translit=False):
     Input: json object -> Json object for a DCS sentence
     Output: tuple(String, List of tuples) -> A tuple of the segmented sentence and a list of tuples with values (stem, morphological tag)
     """
-    list_of_tuples = [
-        (sublist[0], sublist[1]) for sublist in json_entry["t2_ground_truth"]
-    ]  # Each inner list is converted to a tuple
-    # Each inner list represents the analysis for a word
-    # The tuple contains (stem, morphological-tag)
     if translit:
+        list_of_tuples = [
+            (to_intern(sublist[0]), sublist[1])
+            for sublist in json_entry["t2_ground_truth"]
+        ]
         return (to_intern(json_entry["segmented_sentence"]), list_of_tuples)
-
+    else:
+        list_of_tuples = [
+            (sublist[0], sublist[1]) for sublist in json_entry["t2_ground_truth"]
+        ]
     return (json_entry["segmented_sentence"], list_of_tuples)
 
 
