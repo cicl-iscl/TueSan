@@ -164,3 +164,18 @@ def get_token_rule_mapping(data, rules, use_tag=True, translit=False):
         token_rule_mapping.append(sentence_mapping)
 
     return token_rule_mapping
+
+
+def generate_stems_from_rules(token, rules):
+    candidate_stems, candidate_tags = set(), set()
+    
+    for rule in rules:
+        applicable, candidate_stem = rule_is_applicable(rule, token)
+        if applicable:
+            candidate_stems.add(candidate_stem)
+            candidate_tags.add(rule[3])
+    
+    candidate_stems = list(sorted(candidate_stems))
+    candidate_tags = list(sorted(candidate_tags))
+    
+    return candidate_stems, candidate_tags

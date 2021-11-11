@@ -1,5 +1,6 @@
 import torch
 import json
+import time
 
 from functools import partial
 from torch.utils.data import DataLoader
@@ -11,15 +12,21 @@ from model import build_model, build_optimizer, save_model
 from training import train
 from evaluate import evaluate_model, print_metrics, format_predictions
 from scoring import evaluate
+from extract_rules import get_token_rule_mapping, get_rules
 
 # Ignore warning (who cares?)
 import warnings
-
 warnings.filterwarnings("ignore")
+
+# Parse config file
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--cfg", type=str, default = "config.cfg")
+config_file = parser.parse_args().cfg
 
 
 if __name__ == "__main__":
-    with open("config.cfg") as config:
+    with open(config_file) as config:
         config = json.load(config)
 
     translit = config["translit"]
@@ -28,6 +35,11 @@ if __name__ == "__main__":
     print("\nLoad data")
     train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
+    
+    # Exctract rules
+    print("\nExtracting rules")
+    rules = get_rules(train_data, use_tag=True, translit=translit)
+    print(f"Extracted {len(rules)} rules")
 
     # Make vocabulary
     print("\nMake vocab")
@@ -92,11 +104,11 @@ if __name__ == "__main__":
 
     # Evaluate
     mode = config["eval_mode"]
-    dictionary_path = config.get("dictionary_path", None)
-    if dictionary_path is None:
-        dictionary = None
-    else:
-        dictionary = load_sankrit_dictionary(dictionary_path)
+    #dictionary_path = config.get("dictionary_path", None)
+    #if dictionary_path is None:
+    #    dictionary = None
+    #else:
+    #    dictionary = load_sankrit_dictionary(dictionary_path)
 
     eval_predictions = evaluate_model(
         model,
@@ -106,7 +118,7 @@ if __name__ == "__main__":
         index2char,
         device,
         mode=mode,
-        dictionary=dictionary,
+        rules=rules,
     )
     formatted_predictions = format_predictions(eval_predictions)
     print_metrics(eval_predictions, eval_dataset)

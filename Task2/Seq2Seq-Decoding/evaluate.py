@@ -6,35 +6,24 @@ from sklearn.metrics import accuracy_score
 from vocabulary import SOS_TOKEN, EOS_TOKEN, PAD_TOKEN
 from decoding import greedy_decoding, informed_decoding
 
+from extract_rules import generate_stems_from_rules
 from uni2intern import internal_transliteration_to_unicode as to_uni
 
 
-def get_allowed_labels(raw_inputs, num_sents, num_tokens, tag_encoder, dictionary):
+def get_allowed_labels(raw_inputs, tag_encoder, rules):
     """
     Given an batch of input tokens, collects all possible stems and tokens
     from the dictionary
 
     raw_inputs: Inputs strings as nested list [[tokens] sentences]
-    num_sents: Total number of sents in batch
-    num_tokens: Max. number of tokens in any sent in batch
     """
     allowed_stems = []
     allowed_tags = []
 
-    for sent_id in range(num_sents):
-        tokens = raw_inputs[sent_id]
-        for token_id in range(num_tokens):
-            # We have to take care of padding
-            if token_id < len(tokens):
-                token = tokens[token_id]
-                dictionary_entry = list(dictionary[token])
-                stems, tags = zip(*dictionary_entry)
-                stems = list(set(stems))
-                # Only keep tags that are known to the model
-                tags = [tag for tag in list(set(tags)) if tag in tag_encoder.classes_]
-            else:
-                stems = []
-                tags = []
+    for sent in range(raw_inputs):
+        for token in range(sent):
+            stems, tags = generate_stems_from_rules(token, rules)
+            tags = [tag for tag in tags if tag in tag_encoder.classes_]
 
             allowed_stems.append(stems)
             allowed_tags.append(tag_encoder.transform(tags).tolist())
@@ -43,7 +32,7 @@ def get_allowed_labels(raw_inputs, num_sents, num_tokens, tag_encoder, dictionar
 
 
 def evaluate_batch(
-    batch, model, mode, tag_encoder, char2index, index2char, device, dictionary=None
+    batch, model, mode, tag_encoder, char2index, index2char, device, rules=None
 ):
     raw_inputs, inputs, stems, tags = batch
     stems, tags = stems.long(), tags.long()
@@ -63,8 +52,11 @@ def evaluate_batch(
 
     if mode == "informed":
         allowed_stems, allowed_tags = get_allowed_labels(
-            raw_inputs, num_sents, num_tokens, tag_encoder, dictionary
+            raw_inputs, num_sents, num_tokens, tag_encoder, rules
         )
+    
+    # Get total number of tokens
+    num_tokens = sum([len(sent) for sent in raw_inputs])
 
     # Encode input sentence
     encoded, char_embeddings, token_lengths = encoder(inputs)
@@ -72,20 +64,21 @@ def evaluate_batch(
     # Predict morphological tags
     pad_tag = tag_encoder.transform([PAD_TOKEN]).item()
     y_pred_tags = tag_classifier(encoded)  # shape (batch, timesteps, classes)
-    tag_lengths = (tags != pad_tag).sum(dim=-1)  # shape (batch,)
+    assert y_pred_tags.shape[0] == num_tokens
 
     # For greedy decoding, we take the label
     # with highest prediction score
     if mode == "greedy":
         y_pred_tags = torch.argmax(y_pred_tags, dim=-1)  # shape (batch, timesteps)
+        y_pred_tags = y_pred_tags.flatten().detach().cpu().numpy()
 
     # For informed decoding, we choose the allowed label
     # with highest prediction score
     elif mode == "informed":
         # Reshape prediction scores to have 2 dimensions, 1 for
         # tokens and 1 for prediction scores
-        num_classes = y_pred_tags.shape[-1]
-        y_pred_tags = y_pred_tags.reshape(-1, num_classes)
+        # num_classes = y_pred_tags.shape[-1]
+        # y_pred_tags = y_pred_tags.reshape(-1, num_classes)
         predicted_tags = []
 
         # Look at each token individually
@@ -106,22 +99,37 @@ def evaluate_batch(
                 best_score_index = torch.argmax(scores).item()
                 best_tag = current_allowed_tags[best_score_index]
                 predicted_tags.append(best_tag)
-
-        y_pred_tags = torch.LongTensor(predicted_tags)
-        y_pred_tags = y_pred_tags.reshape(num_sents, num_tokens)
-
-    # Convert predicted tag indices to the corresponding string
+        
+        y_pred_tags = np.array(predicted_tags)
+        # y_pred_tags = torch.LongTensor(predicted_tags)
+        # y_pred_tags = y_pred_tags.reshape(num_sents, num_tokens)
+    
+    predicted_tags = tag_encoder.inverse_transform(y_pred_tags)
+    
+    prediction_pointer = 0
     batch_tag_predictions = []
-    for predicted_tags, length in zip(y_pred_tags, tag_lengths):
-        # Only keep as many tags as we have tokens
-        # = remove padding
-        predicted_tags = predicted_tags[:length]
-        predicted_tags = predicted_tags.cpu().numpy()
-        # Convert index -> string
-        predicted_tags = tag_encoder.inverse_transform(predicted_tags)
-        # Save predicted tags
-        predicted_tags = predicted_tags.tolist()
-        batch_tag_predictions.append(predicted_tags)
+    for sent in raw_inputs:
+        sent_predicted_tags = []
+        for token in sent:
+            sent_predicted_tags.append(predicted_tags[prediction_pointer])
+            prediction_pointer += 1
+        batch_tag_predictions.append(sent_predicted_tags)
+    
+    assert prediction_pointer == len(predicted_tags)
+    
+    
+    # Convert predicted tag indices to the corresponding string
+    #batch_tag_predictions = []
+    #for predicted_tags, length in zip(y_pred_tags, tag_lengths):
+    #    # Only keep as many tags as we have tokens
+    #    # = remove padding
+    #    predicted_tags = predicted_tags[:length]
+    #    predicted_tags = predicted_tags.cpu().numpy()
+    #    # Convert index -> string
+    #    predicted_tags = tag_encoder.inverse_transform(predicted_tags)
+    #    # Save predicted tags
+    #    predicted_tags = predicted_tags.tolist()
+    #    batch_tag_predictions.append(predicted_tags)
 
     # Predict stems
     num_sents, num_tokens = stems.shape[:2]
@@ -182,7 +190,7 @@ def evaluate_model(
     index2char,
     device,
     mode="greedy",
-    dictionary=None,
+    rules=None,
 ):
     # Check arguments
     if mode not in ["greedy", "informed"]:
@@ -199,7 +207,7 @@ def evaluate_model(
         device=device,
         char2index=char2index,
         index2char=index2char,
-        dictionary=dictionary,
+        rules=rules,
     )
 
     with torch.no_grad():
