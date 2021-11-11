@@ -40,21 +40,17 @@ if __name__ == "__main__":
     print("\nExtracting rules")
     use_tag = config["rules_use_tag"]
     min_rule_frequency = config["rules_min_frequency"]
-    rules = get_rules(train_data, use_tag=use_tag, translit=translit)
+    rules = get_rules(train_data, use_tag=use_tag)
     rules = [rule for rule, count in rules.items() if count > min_rule_frequency]
     print(f"Extracted {len(rules)} rules.")
 
     # Convert train dataset
     print("\nConverting train dataset")
-    train_dataset = get_token_rule_mapping(
-        train_data, rules, use_tag=use_tag, translit=translit
-    )
+    train_dataset = get_token_rule_mapping(train_data, rules, use_tag=use_tag)
 
     # Convert eval dataset
     print("\nConverting eval dataset")
-    eval_dataset = get_token_rule_mapping(
-        eval_data, rules, use_tag=use_tag, translit=translit
-    )
+    eval_dataset = get_token_rule_mapping(eval_data, rules, use_tag=use_tag)
 
     # Make vocabulary
     print("\nMake vocab")
@@ -81,7 +77,7 @@ if __name__ == "__main__":
     # Build dataloaders
     batch_size = config["batch_size"]
     train_dataloader = DataLoader(
-        train_data_indexed, batch_size=batch_size, collate_fn=collate_fn, shuffle=True,
+        train_data_indexed, batch_size=batch_size, collate_fn=collate_fn, shuffle=True
     )
     eval_dataloader = DataLoader(
         eval_data_indexed,
