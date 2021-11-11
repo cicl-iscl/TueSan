@@ -132,7 +132,7 @@ if __name__ == "__main__":
     formatted_predictions = format_predictions(
         eval_predictions, translit=translit
     )
-    print_metrics(eval_predictions, eval_dataset)
+    # print_metrics(eval_predictions, eval_dataset)
 
     duration = time.time() - start
     print(f"\nDuration: {duration:.2f} seconds.\n")
@@ -143,7 +143,7 @@ if __name__ == "__main__":
 
     # Evaluate
     print("\nEvaluating")
-    print_metrics(eval_predictions, eval_dataset)
+    # print_metrics(eval_predictions, eval_dataset)
     # Task 2 Evaluation
     scores = evaluate(
         [dp[1] for dp in eval_data], formatted_predictions, task_id="t2"
