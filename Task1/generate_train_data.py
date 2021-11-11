@@ -19,8 +19,6 @@ from helpers import get_task1_IO
 def get_data(datapoint, translit=False):
     sandhied, unsandhied_tokenized = get_task1_IO(datapoint, translit=translit)
     unsandhied = " ".join(unsandhied_tokenized)
-    if translit:
-        unsandhied = unsandhied.replace(" ", "_")  # for alignment
     # Punctuation are not removed from input
 
     return sandhied, unsandhied, unsandhied_tokenized
@@ -103,7 +101,7 @@ def merge_single_letters(tokens):
 
 
 def make_labels(tokens):
-    combined_string = "_".join(tokens)  # keep whitespaces as underscores
+    combined_string = " ".join(tokens)  # keep whitespaces as underscores
 
     offsets = np.array([len(token) for token in tokens])
     split_indices = np.cumsum(offsets) - 1
@@ -138,9 +136,9 @@ def construct_dataset(data, translit=False, graphml_folder=None, eval=False):
         if eval:
 
             datapoint = {
-                "sandhied": sandhied.replace(" ", "_"),
+                "sandhied": sandhied,
                 "allowed_words": allowed_words,
-                "unsandhied": unsandhied.split("_"),
+                "unsandhied": unsandhied.split(),
                 "sent_id": sent_id,
             }
             dataset.append(datapoint)
@@ -154,7 +152,7 @@ def construct_dataset(data, translit=False, graphml_folder=None, eval=False):
                 continue
 
             tokens = tokenize(sandhied, unsandhied)
-            tokens = remove_trailing_syllables(tokens, unsandhied_tokenized, translit)
+            tokens = remove_trailing_syllables(tokens, unsandhied_tokenized)
             tokens = merge_single_letters(tokens)
 
             sandhied_merged, labels = make_labels(tokens)
@@ -164,7 +162,7 @@ def construct_dataset(data, translit=False, graphml_folder=None, eval=False):
                 "labels": labels,
                 "tokens": tokens,
                 "allowed_words": allowed_words,
-                "unsandhied": unsandhied.split("_"),
+                "unsandhied": unsandhied.split(),
                 "sent_id": sent_id,
             }
 
