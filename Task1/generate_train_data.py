@@ -138,7 +138,7 @@ def construct_dataset(data, translit=False, graphml_folder=None, eval=False):
             datapoint = {
                 "sandhied": sandhied,
                 "allowed_words": allowed_words,
-                "unsandhied": unsandhied.split(),
+                "unsandhied": unsandhied,
                 "sent_id": sent_id,
             }
             dataset.append(datapoint)
@@ -162,12 +162,11 @@ def construct_dataset(data, translit=False, graphml_folder=None, eval=False):
                 "labels": labels,
                 "tokens": tokens,
                 "allowed_words": allowed_words,
-                "unsandhied": unsandhied.split(),
+                "unsandhied": unsandhied,
                 "sent_id": sent_id,
             }
 
             dataset.append(datapoint)
-            # break
 
     print(f"{cnt} sentences discarded during training dataset construction.")
 
