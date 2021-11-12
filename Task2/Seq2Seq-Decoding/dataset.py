@@ -39,15 +39,20 @@ def index_dataset(data, char2index, tag_encoder, eval=False):
 
         # Only save sentences if number of input tokens
         # is the same as number of ground truth stems/labels
-        if len(input) != len(tags) or len(input) != len(stems):
-            discarded += 1
-            continue
+        if not eval:
+            if len(input) != len(tags) or len(input) != len(stems):
+                discarded += 1
+                continue
 
         # Index input sentence
         # Discard sentences with unknown characters
         try:
-            indexed_input = [[char2index[char] for char in token] for token in input]
-            indexed_input = [torch.LongTensor(token) for token in indexed_input]
+            indexed_input = [
+                [char2index[char] for char in token] for token in input
+            ]
+            indexed_input = [
+                torch.LongTensor(token) for token in indexed_input
+            ]
         except KeyError:
             discarded += 1
             continue
@@ -56,7 +61,9 @@ def index_dataset(data, char2index, tag_encoder, eval=False):
         try:
             # Prepend start of sequence token and append end of sequence token to stems
             stems = [[SOS_TOKEN] + list(stem) + [EOS_TOKEN] for stem in stems]
-            indexed_stems = [[char2index[char] for char in stem] for stem in stems]
+            indexed_stems = [
+                [char2index[char] for char in stem] for stem in stems
+            ]
             indexed_stems = [torch.LongTensor(stem) for stem in indexed_stems]
         except KeyError:
             discarded += 1
@@ -100,7 +107,9 @@ def pad2d(inputs):
     # Get maximum number of tokens in sentence
     max_sent_length = max([len(sent) for sent in inputs])
     # Get maximum number of characters in token
-    max_word_length = max([max([len(word) for word in sent]) for sent in inputs])
+    max_word_length = max(
+        [max([len(word) for word in sent]) for sent in inputs]
+    )
 
     for sent in inputs:
         # We process each sentence individually

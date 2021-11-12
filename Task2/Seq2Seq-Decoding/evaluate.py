@@ -51,7 +51,9 @@ def evaluate_batch(
     tag_classifier.eval()
 
     if mode == "informed":
-        allowed_stems, allowed_tags = get_allowed_labels(raw_inputs, tag_encoder, rules)
+        allowed_stems, allowed_tags = get_allowed_labels(
+            raw_inputs, tag_encoder, rules
+        )
 
     # Get total number of tokens
     num_tokens = sum([len(sent) for sent in raw_inputs])
@@ -67,7 +69,9 @@ def evaluate_batch(
     # For greedy decoding, we take the label
     # with highest prediction score
     if mode == "greedy":
-        y_pred_tags = torch.argmax(y_pred_tags, dim=-1)  # shape (batch, timesteps)
+        y_pred_tags = torch.argmax(
+            y_pred_tags, dim=-1
+        )  # shape (batch, timesteps)
         y_pred_tags = y_pred_tags.flatten().detach().cpu().numpy()
 
     # For informed decoding, we choose the allowed label
@@ -169,7 +173,9 @@ def evaluate_model(
     if mode not in ["greedy", "informed"]:
         raise ValueError(f"Unknown evaluation mode: {mode}")
     if mode == "informed" and rules is None:
-        raise RuntimeError("Evaluation mode is 'informed' but no dictionary given")
+        raise RuntimeError(
+            "Evaluation mode is 'informed' but no dictionary given"
+        )
 
     predictions = []
     get_predictions_from_batch = partial(
@@ -216,10 +222,12 @@ def print_metrics(predictions, ground_truth):
 
 def format_predictions(predictions, translit=False):
     preds = []
+
     tags, stems = zip(*predictions)
     for sent_stems, sent_tags in zip(stems, tags):
         if translit:
             sent_stems = [to_uni(x) for x in sent_stems]
         sentence = list(zip(sent_stems, sent_tags))
+        sentence = [list(tup) for tup in sentence]
         preds.append(sentence)
     return preds

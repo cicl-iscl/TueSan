@@ -21,8 +21,7 @@ def make_vocabulary(data):
     vocabulary = set()
 
     for joint_sent, _ in data:
-        # whitespaces to underscores
-        joint_sent = joint_sent.replace(" ", "_")
+        # whitespaces are kept
         # Just add all characters in input sentence to vocab
         vocabulary.update(set(joint_sent))
 
@@ -32,7 +31,5 @@ def make_vocabulary(data):
     # Make dictionary: indices <-> internal characters <-> unicode characters
     char2index = {char: index for index, char in enumerate(vocabulary)}
     index2char = {index: char for char, index in char2index.items()}
-    char2uni = {char: to_uni(char) for char in vocabulary}
-    char2uni["_"] = " "
 
-    return vocabulary, char2index, index2char, char2uni
+    return vocabulary, char2index, index2char

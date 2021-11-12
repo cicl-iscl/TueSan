@@ -41,7 +41,9 @@ if __name__ == "__main__":
     use_tag = config["rules_use_tag"]
     min_rule_frequency = config["rules_min_frequency"]
     rules = get_rules(train_data, use_tag=use_tag)
-    rules = [rule for rule, count in rules.items() if count > min_rule_frequency]
+    rules = [
+        rule for rule, count in rules.items() if count > min_rule_frequency
+    ]
     print(f"Extracted {len(rules)} rules.")
 
     # Convert train dataset
@@ -50,14 +52,20 @@ if __name__ == "__main__":
 
     # Convert eval dataset
     print("\nConverting eval dataset")
-    eval_dataset = get_token_rule_mapping(eval_data, rules, use_tag=use_tag)
+    eval_dataset = get_token_rule_mapping(
+        eval_data, rules, use_tag=use_tag, eval=True
+    )
 
     # Make vocabulary
     print("\nMake vocab")
     if not use_tag:
-        vocabulary, rule_encoder, tag_encoder, char2index, index2char = make_vocabulary(
-            train_dataset, use_tag=False
-        )
+        (
+            vocabulary,
+            rule_encoder,
+            tag_encoder,
+            char2index,
+            index2char,
+        ) = make_vocabulary(train_dataset, use_tag=False)
     else:
         vocabulary, rule_encoder, char2index, index2char = make_vocabulary(
             train_dataset, use_tag=True
@@ -71,13 +79,20 @@ if __name__ == "__main__":
     )
     print("\nIndex eval data")
     eval_data_indexed = index_dataset(
-        eval_dataset, char2index, rule_encoder, tag_encoder=tag_encoder, eval=True
+        eval_dataset,
+        char2index,
+        rule_encoder,
+        tag_encoder=tag_encoder,
+        eval=True,
     )
 
     # Build dataloaders
     batch_size = config["batch_size"]
     train_dataloader = DataLoader(
-        train_data_indexed, batch_size=batch_size, collate_fn=collate_fn, shuffle=True
+        train_data_indexed,
+        batch_size=batch_size,
+        collate_fn=collate_fn,
+        shuffle=True,
     )
     eval_dataloader = DataLoader(
         eval_data_indexed,
@@ -114,7 +129,9 @@ if __name__ == "__main__":
 
     start = time.time()
 
-    model, optimizer = train(model, optimizer, train_dataloader, epochs, device)
+    model, optimizer = train(
+        model, optimizer, train_dataloader, epochs, device
+    )
 
     # Save model
     print("\nSaving model")
@@ -135,8 +152,7 @@ if __name__ == "__main__":
     eval_predictions = evaluate_model(
         model, eval_dataloader, device, rules, rule_encoder, tag_encoder
     )
-    formatted_predictions = format_predictions(eval_predictions)
-    pp.pprint(formatted_predictions[:2])
+    formatted_predictions = format_predictions(eval_predictions, translit=True)
 
     duration = time.time() - start
     print(f"Duration: {duration:.2f} seconds.\n")
@@ -149,11 +165,6 @@ if __name__ == "__main__":
     print("\nEvaluating")
     print_metrics(eval_predictions, eval_dataset)
     # Task 2 Evaluation
-    scores = evaluate(eval_data[1], formatted_predictions, task_id="t2")
-
-# pp.pprint(formatted_predictions[0])
-# print(type(formatted_predictions))
-# print(type(formatted_predictions[0]))
-# pp.pprint(eval_data[0])
-# print(type(eval_data))
-# print(type(eval_data[0]))
+    scores = evaluate(
+        [dp[1] for dp in eval_data], formatted_predictions, task_id="t2"
+    )

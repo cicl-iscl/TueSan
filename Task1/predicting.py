@@ -36,10 +36,10 @@ def make_predictions(model, eval_dataloader, eval_dataset, device, translit=Fals
             predictions.append(
                 [to_uni(x) for x in predicted_unsandhied]
             )  # predictions in unicode
-            true_unsandhied.append([to_uni(x) for x in sentence["unsandhied"]])
+            true_unsandhied.append(to_uni(sentence["unsandhied"]).split())
         else:
             predicted_unsandhied = reconstruct_unsandhied(tokens, allowed_words)
             predictions.append(predicted_unsandhied)
-            true_unsandhied.append(sentence["unsandhied"])
+            true_unsandhied.append(sentence["unsandhied"].split())
 
     return predictions, true_unsandhied, split_predictions

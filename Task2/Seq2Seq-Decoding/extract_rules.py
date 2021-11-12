@@ -55,7 +55,8 @@ def get_rule(token, stem):
 
     # Find length of overlapping char segments
     matching_segment_lengths = [
-        get_length_of_overlap(token, stem, start_index) for start_index in start_indices
+        get_length_of_overlap(token, stem, start_index)
+        for start_index in start_indices
     ]
 
     # Take longest overlapping char segment
@@ -104,7 +105,9 @@ def rule_is_applicable(rule, token, apply_rule=True):
         candidate_stem = candidate_stem[len(prefix) :]
 
         if candidate_stem.endswith(suffix):
-            candidate_stem = candidate_stem[: len(candidate_stem) - len(suffix)]
+            candidate_stem = candidate_stem[
+                : len(candidate_stem) - len(suffix)
+            ]
             candidate_stem += stem_suffix
             applicable = True
 
@@ -130,7 +133,7 @@ def get_applicable_rules(token, stem, tag, rules, check_tag=True):
     return applicable_rules
 
 
-def get_token_rule_mapping(data, rules, use_tag=True):
+def get_token_rule_mapping(data, rules, use_tag=True, eval=False):
 
     token_rule_mapping = []
 
@@ -138,7 +141,7 @@ def get_token_rule_mapping(data, rules, use_tag=True):
         sentence = sentence.split()
         stems, tags = zip(*labels)
 
-        if len(sentence) != len(stems):
+        if not eval and len(sentence) != len(stems):
             continue
 
         sentence_mapping = []

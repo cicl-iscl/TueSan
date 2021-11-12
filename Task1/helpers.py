@@ -60,14 +60,17 @@ def get_task1_IO(json_entry, translit=False):
     Word segmentation.
     Input: json object -> Json object for a DCS sentence
     Output: tuple(String, List) -> A tuple of the sentence (words joined with sandhi)
-                                                                                                                                                                                                                                                                    and a flattened list of segmented words
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    and a flattened list of segmented words
     """
 
     if translit:
         flattened_list = [
             val for sublist in json_entry["t1_ground_truth"] for val in sublist
         ]
-        return (to_intern(json_entry["joint_sentence"]), flattened_list)
+        return (
+            to_intern(json_entry["joint_sentence"]),
+            [to_intern(x) for x in flattened_list],
+        )
     else:
         flattened_list = [
             val for sublist in json_entry["t1_ground_truth"] for val in sublist
@@ -81,11 +84,11 @@ def get_task1_IO(json_entry, translit=False):
 def load_data(file_path, translit=False):
     with open(file_path, encoding="utf-8") as data_file:
         data = [unicode_normalize(item) for item in json.load(data_file)]
-        # data = [get_task1_IO(sentence, translit) for sentence in data]
-        data = {
-            sentence["sent_id"]: get_task1_IO(sentence, translit) for sentence in data
-        }
-        return data  # dictionary indexed by sent_id
+        data = [get_task1_IO(sentence, translit) for sentence in data]
+        # data = {
+        #     sentence["sent_id"]: get_task1_IO(sentence, translit) for sentence in data
+        # }  # dictionaary indexed by seent_id
+        return data
 
 
 # Load sanskrit dictionary
@@ -99,8 +102,8 @@ def load_sankrit_dictionary(file_path):
 # Check input-output pair for a specific sentence
 
 
-def check_specific_sent(data, sent_id):
-    return data[sent_id]
+# def check_specific_sent(data, sent_id):
+#     return data[sent_id]
 
 
 # Provided by task organizers alongside data
