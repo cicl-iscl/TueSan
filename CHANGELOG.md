@@ -2,6 +2,16 @@
 
 To keep us posted of what's been changed and added ;-), and to remind the forgetful self. 
 
+## 2021-11-12
+----
+### Added 
+- `playy.py`: algorithm for extracting sandhi rules
+
+### To-Do:
+- fix T2 evaluation
+- make `sandhi.py` work with `playy.py` as template
+
+
 ## 2021-10-31
 ----
 ### Added
