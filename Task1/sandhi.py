@@ -1,13 +1,21 @@
 """Formulate sandhi rules from sandhied and unsandhied sequences.
-"""
-import json
 
+   Data for task 1:
+   - source: joint_sentence := sandhied sentence
+   - target: t1_ground_truth := a list of tokens in unsandhied form
+
+   For aligning source and target, we have either:
+   - output of `tokenize()` := sandhied sentence split at split indices obtained from alignment
+   - output of `to_syllables()` := source and target as lists of syllables
+"""
+# ---- main ----
+import json
 from helpers import load_data, load_sankrit_dictionary
 from vocabulary import make_vocabulary
-
-
 from pathlib import Path
-import time
+
+# --------------
+
 from logger import logger
 import pprint
 
@@ -17,44 +25,131 @@ from subword import to_syllables
 
 
 def find_syllables(joint_sent, ground_truth):
-    sandhied_syllables = to_syllables(joint_sent)
-    logger.debug(sandhied_syllables)
-    unsandhied = " ".join(ground_truth)
-    unsandhied_syllables = to_syllables(unsandhied)
-    logger.debug(unsandhied_syllables)
-    return sandhied_syllables, unsandhied_syllables
+    """Prepare two lists of syllables."""
+    return to_syllables(joint_sent), to_syllables(" ".join(ground_truth))
 
 
-def find_sandhis(sandhied_syllables, unsandhied_syllables):
+def find_sandhis(source, target):
     """Compare two lists of syllables to find Sandhi rules:"""
-    assert len(unsandhied_syllables) >= len(sandhied_syllables)
-    sandhis = []
-    i = 0
-    j = 0
-    max_idx = len(sandhied_syllables)
-    while i < max_idx:
-        if unsandhied_syllables[i] == sandhied_syllables[i]:
-            for char in sandhied_syllables[i]:
-                sandhis.append(Sandhi(char, char, "", "keep"))
-            i += 1
-            j = i
-        elif unsandhied_syllables[i][:-1] == sandhied_syllables[i][:-1]:
-            for char in sandhied_syllables[i][:-1]:
-                sandhis.append(Sandhi(char, char, "", "keep"))
-            if i + 1 < max_idx:
-                sandhis.append(
-                    Sandhi(
-                        sandhied_syllables[i][-1],
-                        unsandhied_syllables[i][-1],
-                        sandhied_syllables[i + 1][0],
-                        "replace",
-                    )
-                )
-            i += 1
-            j = i
-        i += 1
+    assert len(target) >= len(source)
+    logger.info("Source:")
+    logger.debug(source)
+    logger.info("Target:")
+    logger.debug(target)
 
-    return sandhis
+    # First we find the possible places where sandhis rules
+    # could have been applied. These are simply locations
+    # around whitespaces in the target sequence.
+
+    # Therefore, we collect the previous and next syllable
+    # of every whitespace, save them as a three-element
+    # list, which will later be used for sequence
+    # reconstruction.
+    whitespaces = []
+    for i, syll in enumerate(target):
+        if syll == " ":
+            # Hopefully nothing starts/ends with whitespaces!
+            # For readability we write:
+            prev_syll = target[i - 1]
+            next_syll = target[i + 1]
+            whitespaces.append(([prev_syll, " ", next_syll], (i - 1, i + 1)))
+
+    logger.info("Collected syllables around whitespaces:")
+    pp.pprint(whitespaces)
+
+    # Not every whitespace is a result of sandhi. We want to
+    # know which of these whitespace-rules are used as sandhi.
+
+    # The idea is to compare source and target lists one by one,
+    # if match, save to reconstructed_sequence;
+    # if don't match, replace syll in source with a whitespace rule
+    # starting with this syll, etc.
+    # Note down for which syllables we applied what rules
+    # After the lists are processed, we are left with:
+    # - used_rules
+    # - reconstructed sequence
+    # To make sure we didn't miss anything, we compare
+    # our reconstructed sequence with the target sequence
+    # Formulate sandhi rules, construct Sandhi objects
+    # Return Sandhi objects and the source sentence with character
+    # linked to Sandhi objects.
+
+    used_rules, reconstructed_sequence = [], []
+
+    i = 0  # source index
+    j = 0  # target index
+
+    while i < len(source):
+        # print(i, j)
+        if target[j] != source[i]:  # Form disagrees
+            if (
+                i + 1 <= len(source) and source[i + 1] == " "
+            ):  # Is followed by a whitespace in source (meaning not sandhi?)
+                # Check whitespace-rule
+                rule = whitespaces.pop(0)
+                logger.info(
+                    f"source-{source[i]} and target-{target[j]}: {rule} apply to"
+                    " previous syllable although forms match."
+                )
+                if (
+                    rule[0][0] == source[i - 1]
+                ):  # Rule matches previous token from source
+                    # Keep track of rules used --- Tuple[Tuple, 3-element List]
+                    used_rules.append(((i - 1, source[i - 1]), rule[0]))
+                    # Replace previous token, add syllables to reconstruction
+                    reconstructed_sequence.pop()
+                    reconstructed_sequence.extend(rule[0])
+                    # Increment indices
+                    j = rule[1][1] + 1  # end index in target sequence plus one
+                else:
+                    logger.warning("Something's wrong...")
+
+                # Compare current 3 syllables with next rule
+                assert i + 2 <= len(source)
+                rule = whitespaces.pop(0)
+                if [source[i], source[i + 1], source[i + 2]] == rule[0]:
+                    # This whitespace-rule is not sandhi
+                    # Add syllables to reconstruction directly
+                    reconstructed_sequence.extend(rule[0])
+                    # Increment indices
+                    i += 2  # length is 3 but save one for final while-loop increment
+                    j = rule[1][1]  # also save 1
+        elif source[i] != " " and target[j] != " ":
+            reconstructed_sequence.append(source[i])
+
+        else:  # If both are spaces, we have skipped one rule check because previous tokens agrees in form
+            rule = whitespaces.pop(0)
+            print(f"Skipped {rule}")
+            print(f"source: {[source[i - 1], source[i], source[i + 1]]}")
+            print(f"target: {rule[0]}")
+            assert i + 1 <= len(source)
+            if [source[i - 1], source[i], source[i + 1]] == rule[0]:
+                # This whitespace-rule is not sandhi
+                # Add syllables to reconstruction directly
+                reconstructed_sequence.pop()
+                reconstructed_sequence.extend(rule[0])
+                # Increment indices
+                i += 1  # length is 3 but started with i-1, also save one for final while-loop increment
+                j = rule[1][1]  # also save 1
+            else:  # Sandhi
+                used_rules.append(((i - 1, source[i - 1]), rule[0]))
+                i += 1
+                j = rule[1][1]
+
+        i += 1
+        j += 1
+    logger.info("Used rules:")
+    pp.pprint(used_rules)
+    logger.info("Reconstructed sequence:")
+    pp.pprint(reconstructed_sequence)
+    logger.info("Target sequence:")
+    pp.pprint(target)
+
+    # Check if reconstructed sequence is different from target sequence
+    # If so, identify other rules
+
+    # return sandhis
+    return used_rules, reconstructed_sequence
 
 
 class Sandhi(object):
@@ -95,11 +190,9 @@ if __name__ == "__main__":
 
     # find_sandhis(*train_data[0])
 
-    for i in train_data[:5]:
+    for i in train_data[1:5]:
         logger.info("\n-------------------------------------")
         logger.info(i[0])
         logger.info(" ".join(i[1]))
         sandhied_syllables, unsandhied_syllables = find_syllables(*i)
-        sandhis = find_sandhis(sandhied_syllables, unsandhied_syllables)
-        for sandhi in sandhis:
-            logger.info(sandhi)
+        rules, seq = find_sandhis(sandhied_syllables, unsandhied_syllables)
