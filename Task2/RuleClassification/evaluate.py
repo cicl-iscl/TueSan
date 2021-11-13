@@ -140,5 +140,5 @@ def convert_eval_if_translit(eval_data, test=False):
         return eval_data
     converted = []
     for dp in eval_data:
-        converted.append([(to_uni(x), y) for x, y in dp[1]])
+        converted.append((dp[0], [(to_uni(x), y) for x, y in dp[1]]))
     return converted
