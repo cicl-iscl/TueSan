@@ -28,6 +28,7 @@ from edit_distance import SequenceMatcher as align
 
 from tqdm import tqdm
 
+
 def find_syllables(joint_sent, ground_truth):
     """Prepare two lists of syllables."""
     return to_syllables(joint_sent), to_syllables(" ".join(ground_truth))
@@ -35,70 +36,75 @@ def find_syllables(joint_sent, ground_truth):
 
 def find_sandhis(source, target):
     """Compare two lists of syllables to find Sandhi rules:"""
-    #assert len(target) >= len(source)
+    # assert len(target) >= len(source)
     if len(source) >= len(target):
         return []
-    #logger.info("Source:")
-    #logger.debug(source)
-    #logger.info("Target:")
-    #logger.debug(target)
-    
+    # logger.info("Source:")
+    # logger.debug(source)
+    # logger.info("Target:")
+    # logger.debug(target)
+
     used_rules = []
-    
+
+    # Find alignment between source and target chars
     alignment = align(a=source, b=target)
     alignment = alignment.get_matching_blocks()
     source_indices, target_indices, _ = zip(*alignment)
-    
-    #logger.info("Source Indices:")
-    #logger.debug(source_indices)
-    #logger.info("Target Indices:")
-    #logger.debug(target_indices)
-    
+
+    # logger.info("Source Indices:")
+    # logger.debug(source_indices)
+    # logger.info("Target Indices:")
+    # logger.debug(target_indices)
+
+    # Take extra care of the first chunk:
+    # If the first char of source is not aligned to anything, we have to include it manually
     if source_indices[0] != 0:
-        used_rules.append((source[:source_indices[0]], target[:target_indices[0]]))
-    
+        used_rules.append((source[: source_indices[0]], target[: target_indices[0]]))
+
+    # Introduce rules that map contiguous aligned source and target chunks
     for k in range(len(source_indices)):
         s_start_idx = source_indices[k]
-        s_stop_idx = source_indices[k+1] if k + 1 < len(source_indices) else None
+        s_stop_idx = source_indices[k + 1] if k + 1 < len(source_indices) else None
         t_start_idx = target_indices[k]
-        t_stop_idx = target_indices[k+1] if k + 1 < len(source_indices) else None
-        
+        t_stop_idx = target_indices[k + 1] if k + 1 < len(source_indices) else None
+
+        # If we map 1 source char to something, don't do anything special
         if s_stop_idx is None or s_stop_idx - s_start_idx == 1:
-            used_rules.append((source[s_start_idx:s_stop_idx], target[t_start_idx:t_stop_idx]))
+            used_rules.append(
+                (source[s_start_idx:s_stop_idx], target[t_start_idx:t_stop_idx])
+            )
+
+        # If we map multiple source chars, do
+        #  1. Map first source char of chunk to aligned target char
+        #  2. Map following source chars to following aligned target chars
         else:
             used_rules.append((source[s_start_idx], target[t_start_idx]))
-            used_rules.append((source[s_start_idx+1:s_stop_idx], target[t_start_idx+1:t_stop_idx]))
-    
-    #logger.info("Used rules")
-    #logger.debug(used_rules)
-    
+            used_rules.append(
+                (
+                    source[s_start_idx + 1 : s_stop_idx],
+                    target[t_start_idx + 1 : t_stop_idx],
+                )
+            )
+
+    # logger.info("Used rules")
+    # logger.debug(used_rules)
+
+    # Reconstruct target
     reconstructed_sequence = []
     for rule in used_rules:
         reconstructed_sequence += rule[1]
     reconstructed_sequence = "".join(reconstructed_sequence)
-    
+
     if reconstructed_sequence != target:
         logger.debug(source)
         logger.debug(used_rules)
         logger.debug(reconstructed_sequence)
         logger.debug(target)
         logger.info(" ")
-        
+
         return []
-    
+
     return used_rules
-    
-    #logger.info(" ")
-            
-        
-        
-
-    # Check if reconstructed sequence is different from target sequence
-    # If so, identify other rules
-    #assert reconstructed_sequence == target
-
-    # return sandhis
-    #return used_rules, reconstructed_sequence
 
 
 class Sandhi(object):
@@ -141,18 +147,17 @@ if __name__ == "__main__":
     all_rules = set()
 
     for i in tqdm(train_data[:]):
-        #logger.info("\n-------------------------------------")
-        #logger.info(i[0])
-        #logger.info(" ".join(i[1]))
-        #sandhied_syllables, unsandhied_syllables = find_syllables(*i)
+        # logger.info("\n-------------------------------------")
+        # logger.info(i[0])
+        # logger.info(" ".join(i[1]))
+        # sandhied_syllables, unsandhied_syllables = find_syllables(*i)
         source = i[0]
         target = " ".join(i[1])
         used_rules = find_sandhis(source, target)
-        
+
         all_rules.update(set(used_rules))
-        
+
     all_rules = [rule for rule in all_rules if rule[0] != rule[1]]
-    
+
     logger.info(all_rules)
     logger.info(len(all_rules))
-        
