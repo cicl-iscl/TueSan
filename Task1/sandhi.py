@@ -23,6 +23,8 @@ pp = pprint.PrettyPrinter(indent=4)
 
 from subword import to_syllables
 
+from collections import Counter
+
 
 def find_syllables(joint_sent, ground_truth):
     """Prepare two lists of syllables."""
@@ -46,6 +48,7 @@ def find_sandhis(source, target):
     # list, which will later be used for sequence
     # reconstruction.
     whitespaces = []
+    indices = []
     for i, syll in enumerate(target):
         if syll == " ":
             # Hopefully nothing starts/ends with whitespaces!
@@ -53,10 +56,13 @@ def find_sandhis(source, target):
             prev_syll = target[i - 1]
             next_syll = target[i + 1]
             whitespaces.append(([prev_syll, " ", next_syll], (i - 1, i + 1)))
-
+            indices.append(i - 1)
+            indices.append(i + 1)
     logger.info("Collected syllables around whitespaces:")
     pp.pprint(whitespaces)
 
+    repeated = [k for k, v in Counter(indices).items() if v >= 2]
+    logger.info(f"Items affected by 2 rules:{repeated}")
     # Not every whitespace is a result of sandhi. We want to
     # know which of these whitespace-rules are used as sandhi.
 
@@ -80,9 +86,24 @@ def find_sandhis(source, target):
     j = 0  # target index
 
     while i < len(source):
-        # print(i, j)
+        print(i, j)
         if target[j] != source[i]:  # Form disagrees
-            if (
+            if target[j][0] == source[i][0]:  # only by last few chars
+                rule = whitespaces.pop(0)
+                if rule[0][0] == target[j]:  # Found matching rule
+                    # Reconstruct
+                    reconstructed_sequence.extend(rule[0])
+                    # Save as used rule
+                    used_rules.append(((i, source[i]), rule[0]))
+                    # Increment indices
+                    if source[i + 1] == " ":
+                        i += 2
+                    j = rule[1][1]
+                    if j in repeated:
+                        reconstructed_sequence.pop()
+                        i -= 1
+                        j -= 1
+            elif (
                 i + 1 <= len(source) and source[i + 1] == " "
             ):  # Is followed by a whitespace in source (meaning not sandhi?)
                 # Check whitespace-rule
@@ -100,6 +121,8 @@ def find_sandhis(source, target):
                     reconstructed_sequence.pop()
                     reconstructed_sequence.extend(rule[0])
                     # Increment indices
+                    # if i not in repeated:
+                    #     i += 2
                     j = rule[1][1] + 1  # end index in target sequence plus one
                 else:
                     logger.warning("Something's wrong...")
@@ -114,6 +137,19 @@ def find_sandhis(source, target):
                     # Increment indices
                     i += 2  # length is 3 but save one for final while-loop increment
                     j = rule[1][1]  # also save 1
+            elif (
+                j + 1 <= len(target) and target[j] == " " and target[j + 1] == source[i]
+            ):
+                rule = whitespaces.pop(0)
+                # print([source[i - 1], " ", source[i]])
+                # print(rule[0])
+                # print("---------------------------------")
+                if [source[i - 1], " ", source[i]] == rule[0]:
+                    reconstructed_sequence.append(" ")
+                    reconstructed_sequence.append(source[i])
+
+                    used_rules.append(((i - 1, source[i - 1]), rule[0]))
+                    j += 1
         elif source[i] != " " and target[j] != " ":
             reconstructed_sequence.append(source[i])
 
@@ -123,7 +159,18 @@ def find_sandhis(source, target):
             print(f"source: {[source[i - 1], source[i], source[i + 1]]}")
             print(f"target: {rule[0]}")
             assert i + 1 <= len(source)
-            if [source[i - 1], source[i], source[i + 1]] == rule[0]:
+            if target[j + 1][0] != source[i + 1][0]:  # not properly aligned
+                if target[j - 1][0] == source[i + 1][0]:
+                    # Reconstruct
+                    reconstructed_sequence.pop()  # remove duplicates
+                    reconstructed_sequence.extend(rule[0])
+                    # Save as used rule
+                    used_rules.append(((i + 1, source[i + 1]), rule[0]))
+                    print(used_rules)
+                    # Increment indices
+                    i += 1
+                    j = rule[1][1]
+            elif [source[i - 1], source[i], source[i + 1]] == rule[0]:
                 # This whitespace-rule is not sandhi
                 # Add syllables to reconstruction directly
                 reconstructed_sequence.pop()
@@ -138,6 +185,7 @@ def find_sandhis(source, target):
 
         i += 1
         j += 1
+
     logger.info("Used rules:")
     pp.pprint(used_rules)
     logger.info("Reconstructed sequence:")
@@ -147,6 +195,7 @@ def find_sandhis(source, target):
 
     # Check if reconstructed sequence is different from target sequence
     # If so, identify other rules
+    assert reconstructed_sequence == target
 
     # return sandhis
     return used_rules, reconstructed_sequence
@@ -190,7 +239,7 @@ if __name__ == "__main__":
 
     # find_sandhis(*train_data[0])
 
-    for i in train_data[1:5]:
+    for i in train_data[:50]:
         logger.info("\n-------------------------------------")
         logger.info(i[0])
         logger.info(" ".join(i[1]))
