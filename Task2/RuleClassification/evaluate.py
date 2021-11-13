@@ -136,8 +136,9 @@ def format_predictions(predictions, translit=False):
 
 
 def convert_eval_if_translit(eval_data, test=False):
-    if test: return eval_data
+    if test:
+        return eval_data
     converted = []
     for dp in eval_data:
-        converted.append([to_uni(x[0]), y for x[0], y in dp[1]])
+        converted.append([(to_uni(x[0]), y) for x[0], y in dp[1]])
     return converted
