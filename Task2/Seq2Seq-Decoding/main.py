@@ -143,5 +143,5 @@ if __name__ == "__main__":
     # print_metrics(eval_predictions, eval_dataset)
     # Task 2 Evaluation
     if translit:
-        eval_data = convert_eval_if_translit(eval_data, test=test)
+        eval_data = convert_eval_if_translit(eval_data)
     scores = evaluate([dp[1] for dp in eval_data], formatted_predictions, task_id="t2")

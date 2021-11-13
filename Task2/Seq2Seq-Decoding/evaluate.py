@@ -227,9 +227,7 @@ def format_predictions(predictions, translit=False):
     return preds
 
 
-def convert_eval_if_translit(eval_data, test=False):
-    if test:
-        return eval_data
+def convert_eval_if_translit(eval_data):
     converted = []
     for dp in eval_data:
         converted.append((dp[0], [(to_uni(x), y) for x, y in dp[1]]))
