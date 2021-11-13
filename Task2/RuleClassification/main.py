@@ -36,7 +36,6 @@ if __name__ == "__main__":
         config = json.load(config)
 
     translit = config["translit"]
-    test = config["test"]
 
     # Load data
     print("\nLoad data")
