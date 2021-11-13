@@ -14,8 +14,14 @@ from vocabulary import make_vocabulary, PAD_TOKEN
 from dataset import index_dataset, collate_fn, eval_collate_fn
 from model import build_model, build_optimizer, save_model
 from training import train
-from evaluate import evaluate_model, print_metrics, format_predictions
+from evaluate import (
+    evaluate_model,
+    print_metrics,
+    format_predictions,
+    convert_eval_if_translit,
+)
 from extract_rules import get_token_rule_mapping, get_rules
+from uni2intern import internal_transliteration_to_unicode as to_uni
 from scoring import evaluate
 
 
@@ -30,6 +36,7 @@ if __name__ == "__main__":
         config = json.load(config)
 
     translit = config["translit"]
+    test = config["test"]
 
     # Load data
     print("\nLoad data")
@@ -41,9 +48,7 @@ if __name__ == "__main__":
     use_tag = config["rules_use_tag"]
     min_rule_frequency = config["rules_min_frequency"]
     rules = get_rules(train_data, use_tag=use_tag)
-    rules = [
-        rule for rule, count in rules.items() if count > min_rule_frequency
-    ]
+    rules = [rule for rule, count in rules.items() if count > min_rule_frequency]
     print(f"Extracted {len(rules)} rules.")
 
     # Convert train dataset
@@ -52,9 +57,7 @@ if __name__ == "__main__":
 
     # Convert eval dataset
     print("\nConverting eval dataset")
-    eval_dataset = get_token_rule_mapping(
-        eval_data, rules, use_tag=use_tag, eval=True
-    )
+    eval_dataset = get_token_rule_mapping(eval_data, rules, use_tag=use_tag, eval=True)
 
     # Make vocabulary
     print("\nMake vocab")
@@ -79,20 +82,13 @@ if __name__ == "__main__":
     )
     print("\nIndex eval data")
     eval_data_indexed = index_dataset(
-        eval_dataset,
-        char2index,
-        rule_encoder,
-        tag_encoder=tag_encoder,
-        eval=True,
+        eval_dataset, char2index, rule_encoder, tag_encoder=tag_encoder, eval=True
     )
 
     # Build dataloaders
     batch_size = config["batch_size"]
     train_dataloader = DataLoader(
-        train_data_indexed,
-        batch_size=batch_size,
-        collate_fn=collate_fn,
-        shuffle=True,
+        train_data_indexed, batch_size=batch_size, collate_fn=collate_fn, shuffle=True
     )
     eval_dataloader = DataLoader(
         eval_data_indexed,
@@ -129,9 +125,7 @@ if __name__ == "__main__":
 
     start = time.time()
 
-    model, optimizer = train(
-        model, optimizer, train_dataloader, epochs, device
-    )
+    model, optimizer = train(model, optimizer, train_dataloader, epochs, device)
 
     # Save model
     print("\nSaving model")
@@ -165,6 +159,6 @@ if __name__ == "__main__":
     print("\nEvaluating")
     print_metrics(eval_predictions, eval_dataset)
     # Task 2 Evaluation
-    scores = evaluate(
-        [dp[1] for dp in eval_data], formatted_predictions, task_id="t2"
-    )
+    if translit:
+        eval_data = convert_eval_if_translit(eval_data, test=test)
+    scores = evaluate([dp[1] for dp in eval_data], formatted_predictions, task_id="t2")

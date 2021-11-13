@@ -12,9 +12,7 @@ from collections import defaultdict
 from uni2intern import internal_transliteration_to_unicode as to_uni
 
 
-def evaluate_model(
-    model, eval_dataloader, device, rules, rule_encoder, tag_encoder
-):
+def evaluate_model(model, eval_dataloader, device, rules, rule_encoder, tag_encoder):
     index2rule = defaultdict(lambda: UNK_RULE)
     index2rule.update({index: rule for rule, index in rule_encoder.items()})
 
@@ -52,9 +50,7 @@ def evaluate_model(
 
                     # Find applicable rules
                     for rule in rules:
-                        is_applicable, candidate_stem = rule_is_applicable(
-                            rule, token
-                        )
+                        is_applicable, candidate_stem = rule_is_applicable(rule, token)
                         if is_applicable:
                             candidate_rules.append(rule)
                             candidate_stems.append(candidate_stem)
@@ -62,9 +58,7 @@ def evaluate_model(
                     indexed_candidate_rules = [
                         rule_encoder[rule] for rule in candidate_rules
                     ]
-                    indexed_candidate_rules = torch.LongTensor(
-                        indexed_candidate_rules
-                    )
+                    indexed_candidate_rules = torch.LongTensor(indexed_candidate_rules)
 
                     if len(candidate_rules) == 0:
                         predicted_rule = UNK_RULE
@@ -80,12 +74,8 @@ def evaluate_model(
                             predicted_tag = None
 
                     else:
-                        candidate_rule_probs = rule_probs[
-                            indexed_candidate_rules
-                        ]
-                        best_rule_index = torch.argmax(
-                            candidate_rule_probs
-                        ).item()
+                        candidate_rule_probs = rule_probs[indexed_candidate_rules]
+                        best_rule_index = torch.argmax(candidate_rule_probs).item()
 
                         predicted_rule = candidate_rules[best_rule_index]
                         predicted_stem = candidate_stems[best_rule_index]
@@ -143,3 +133,11 @@ def format_predictions(predictions, translit=False):
         sentence = [list(tup) for tup in sentence]
         preds.append(sentence)
     return preds
+
+
+def convert_eval_if_translit(eval_data, test=False):
+    if test: return eval_data
+    converted = []
+    for dp in eval_data:
+        converted.append([to_uni(x[0]), y for x[0], y in dp[1]])
+    return converted
