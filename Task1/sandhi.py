@@ -87,22 +87,80 @@ def find_sandhis(source, target):
 
     while i < len(source):
         print(i, j)
+        print(source[i], target[j])
         if target[j] != source[i]:  # Form disagrees
-            if target[j][0] == source[i][0]:  # only by last few chars
+            if target[j][0] == source[i][0]:  # First character is the same
                 rule = whitespaces.pop(0)
-                if rule[0][0] == target[j]:  # Found matching rule
+                if target[j] == rule[0][0]:  # Found matching rule
                     # Reconstruct
-                    reconstructed_sequence.extend(rule[0])
-                    # Save as used rule
-                    used_rules.append(((i, source[i]), rule[0]))
-                    # Increment indices
-                    if source[i + 1] == " ":
-                        i += 2
-                    j = rule[1][1]
                     if j in repeated:
                         reconstructed_sequence.pop()
+                    reconstructed_sequence.extend(rule[0])
+
+                    # Check if ge --> ga I (one-three)
+                    if (
+                        source[i + 1] != " "
+                        and source[i + 1][0] != rule[0][-1][0]
+                        and source[i + 1][-1] != rule[0][-1][-1]
+                    ):
+                        if source[i + 1] == target[rule[1][1] + 1]:
+                            print("case 4 (special case 1)")
+                            used_rules.append(((i, [source[i]]), rule[0]))  # expansion
+                            print(used_rules[-1])
+                            # do not increment i
+                            j = rule[1][1]
+                        else:
+                            used_rules.append(((i, [source[i]]), rule[0]))  # expansion
+                            # do not increment i
+                            j = rule[1][1]
+                            print("case 1")
+                    # Check if tanmu --> tat mu (two-three)
+                    elif (
+                        source[i + 1][0] == rule[0][-1][0]
+                        or source[i + 1][-1] == rule[0][-1][-1]
+                    ):
+                        if source[i + 1] == target[rule[1][1] + 1]:
+                            print("case 6 (special case 1)")
+                            used_rules.append(((i, [source[i]]), rule[0]))  # expansion
+                            print(used_rules[-1])
+                            # do not increment i
+                            j = rule[1][1]
+                        else:
+                            used_rules.append(
+                                ((i, [source[i], source[i + 1]]), rule[0])
+                            )  # expansion
+                            i += 1
+                            j = rule[1][1]
+                            print(used_rules[-1])
+                            print("case 2")
+                    # Check if (three-three)
+                    elif source[i + 1] == " ":
+                        used_rules.append(
+                            ((i, [source[i], source[i + 1], source[i + 2]]), rule[0])
+                        )  # expansion
+                        i += 2
+                        j = rule[1][1]
+                        print("case 3")
+
+                    if (
+                        source[i + 1][0] == target[j][0]
+                        or source[i + 1][:2] == "r" + target[j][0]
+                    ):
+                        used_rules.append(((i, [source[i], source[i + 1]]), rule[0]))
+                        i += 1
+                    if j in repeated:
+                        # reconstructed_sequence.pop()
                         i -= 1
                         j -= 1
+
+            elif i + 1 == len(source) and target[j + 1]:
+                rule = whitespaces.pop(0)
+                # print(rule[0])
+                if source[i - 1] == rule[0][0]:
+                    reconstructed_sequence.pop()
+                    reconstructed_sequence.extend(rule[0])
+                    used_rules.append(((i - 1, [source[i - 1], source[i]]), rule[0]))
+
             elif (
                 i + 1 <= len(source) and source[i + 1] == " "
             ):  # Is followed by a whitespace in source (meaning not sandhi?)
@@ -116,27 +174,45 @@ def find_sandhis(source, target):
                     rule[0][0] == source[i - 1]
                 ):  # Rule matches previous token from source
                     # Keep track of rules used --- Tuple[Tuple, 3-element List]
-                    used_rules.append(((i - 1, source[i - 1]), rule[0]))
+                    used_rules.append(
+                        ((i - 1, [source[i - 1], source[i], source[i + 1]]), rule[0])
+                    )
+                    print(f"used rules: {used_rules[-1]}")
+                    j = rule[1][1] + 1  # end index in target sequence plus one
                     # Replace previous token, add syllables to reconstruction
                     reconstructed_sequence.pop()
                     reconstructed_sequence.extend(rule[0])
-                    # Increment indices
-                    # if i not in repeated:
-                    #     i += 2
-                    j = rule[1][1] + 1  # end index in target sequence plus one
+                    if j - 1 in repeated:
+                        reconstructed_sequence.pop()
+
                 else:
                     logger.warning("Something's wrong...")
 
                 # Compare current 3 syllables with next rule
                 assert i + 2 <= len(source)
                 rule = whitespaces.pop(0)
-                if [source[i], source[i + 1], source[i + 2]] == rule[0]:
+                print(f"current rule: {rule[0]}")
+                print(reconstructed_sequence)
+                print([source[i], source[i + 1], source[i + 2]])
+                if [source[i], source[i + 1]] == rule[0][:-1] and source[i + 2][
+                    0
+                ] == rule[0][-1][0]:
                     # This whitespace-rule is not sandhi
                     # Add syllables to reconstruction directly
                     reconstructed_sequence.extend(rule[0])
                     # Increment indices
-                    i += 2  # length is 3 but save one for final while-loop increment
+                    if source[i + 1] != " ":  # plain split
+                        used_rules.append(
+                            ((i - 1, [source[i - 1], source[i]]), rule[0])
+                        )
+                        i += 1
+                    else:
+                        i += 2  # one less for final while-loop increment
                     j = rule[1][1]  # also save 1
+                    if j in repeated:
+                        reconstructed_sequence.pop()
+                        i -= 1
+                        j -= 1
             elif (
                 j + 1 <= len(target) and target[j] == " " and target[j + 1] == source[i]
             ):
@@ -148,7 +224,9 @@ def find_sandhis(source, target):
                     reconstructed_sequence.append(" ")
                     reconstructed_sequence.append(source[i])
 
-                    used_rules.append(((i - 1, source[i - 1]), rule[0]))
+                    used_rules.append(
+                        ((i - 1, [source[i - 1], source[i], source[i + 1]]), rule[0])
+                    )
                     j += 1
         elif source[i] != " " and target[j] != " ":
             reconstructed_sequence.append(source[i])
@@ -165,23 +243,40 @@ def find_sandhis(source, target):
                     reconstructed_sequence.pop()  # remove duplicates
                     reconstructed_sequence.extend(rule[0])
                     # Save as used rule
-                    used_rules.append(((i + 1, source[i + 1]), rule[0]))
-                    print(used_rules)
+                    used_rules.append(
+                        (
+                            (i + 1, [source[i + 1], source[i + 2], source[i + 3]]),
+                            rule[0],
+                        )
+                    )
+                    print(used_rules[-1])
                     # Increment indices
                     i += 1
                     j = rule[1][1]
             elif [source[i - 1], source[i], source[i + 1]] == rule[0]:
                 # This whitespace-rule is not sandhi
                 # Add syllables to reconstruction directly
+                print(i, j)
+                print("case x")
+                print(reconstructed_sequence)
+
                 reconstructed_sequence.pop()
                 reconstructed_sequence.extend(rule[0])
                 # Increment indices
                 i += 1  # length is 3 but started with i-1, also save one for final while-loop increment
                 j = rule[1][1]  # also save 1
             else:  # Sandhi
-                used_rules.append(((i - 1, source[i - 1]), rule[0]))
-                i += 1
-                j = rule[1][1]
+                print(i, j)
+                print("case 5")
+                reconstructed_sequence.pop()
+                reconstructed_sequence.extend(rule[0])
+                used_rules.append(
+                    ((i - 1, [source[i - 1], source[i], source[i + 1]]), rule[0])
+                )
+                print(used_rules[-1])
+                if not j + 1 in repeated:
+                    i += 1
+                    j = rule[1][1]
 
         i += 1
         j += 1
@@ -189,9 +284,9 @@ def find_sandhis(source, target):
     logger.info("Used rules:")
     pp.pprint(used_rules)
     logger.info("Reconstructed sequence:")
-    pp.pprint(reconstructed_sequence)
+    print(reconstructed_sequence)
     logger.info("Target sequence:")
-    pp.pprint(target)
+    print(target)
 
     # Check if reconstructed sequence is different from target sequence
     # If so, identify other rules

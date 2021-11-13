@@ -84,11 +84,11 @@ def to_syllables(joint_sent):
                     syll += char
             elif i + 2 < midx and joint_sent[i + 1] in C and joint_sent[i + 2] in V:
                 syll += char
-                syllables.append(syll)
-                syll = ""
-                if len(syllables) > 1 and syllables[-2] in C:
-                    syllables[-1] = "".join(syllables[-2:])
-                    syllables.pop(-2)
+                # syllables.append(syll)
+                # syll = ""
+                # if len(syllables) > 1 and syllables[-2] in C:
+                #     syllables[-1] = "".join(syllables[-2:])
+                #     syllables.pop(-2)
             else:
                 if syll:
                     syll += char
