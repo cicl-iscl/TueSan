@@ -48,5 +48,8 @@ Data can be accessed from the server, `/data/jingwen/sanskrit/`.
 
 ### To-Do
 ----
-- check missing predictions (shouldn't discard sentences in eval data), prediction format
 - change informed approach to accomodate translit
+- fix T2 evaluation
+- make `sandhi.py` work (with `playy.py` as template)
+- combine/generalise T2 rules?
+- some kind of error analysis for T2

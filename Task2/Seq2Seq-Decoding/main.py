@@ -10,7 +10,12 @@ from vocabulary import make_vocabulary, PAD_TOKEN
 from dataset import index_dataset, collate_fn, eval_collate_fn
 from model import build_model, build_optimizer, save_model
 from training import train
-from evaluate import evaluate_model, print_metrics, format_predictions
+from evaluate import (
+    evaluate_model,
+    print_metrics,
+    format_predictions,
+    convert_eval_if_translit,
+)
 from scoring import evaluate
 from extract_rules import get_token_rule_mapping, get_rules
 
@@ -46,9 +51,7 @@ if __name__ == "__main__":
     # Make vocabulary
     print("\nMake vocab")
     # TODO: Include UNK chars and labels
-    vocabulary, tag_encoder, char2index, index2char = make_vocabulary(
-        train_data
-    )
+    vocabulary, tag_encoder, char2index, index2char = make_vocabulary(train_data)
     pad_tag = tag_encoder.transform([PAD_TOKEN]).item()
 
     # Index data
@@ -69,10 +72,7 @@ if __name__ == "__main__":
     eval_collate_fn = partial(eval_collate_fn, pad_tag=pad_tag)
 
     train_dataloader = DataLoader(
-        train_data_indexed,
-        batch_size=batch_size,
-        collate_fn=collate_fn,
-        shuffle=True,
+        train_data_indexed, batch_size=batch_size, collate_fn=collate_fn, shuffle=True
     )
     eval_dataloader = DataLoader(
         eval_data_indexed,
@@ -107,9 +107,7 @@ if __name__ == "__main__":
 
     # Save model
     name = config["name"]
-    save_model(
-        model, optimizer, vocabulary, tag_encoder, char2index, index2char, name
-    )
+    save_model(model, optimizer, vocabulary, tag_encoder, char2index, index2char, name)
 
     # Evaluate
     mode = config["eval_mode"]
@@ -129,9 +127,7 @@ if __name__ == "__main__":
         mode=mode,
         rules=rules,
     )
-    formatted_predictions = format_predictions(
-        eval_predictions, translit=translit
-    )
+    formatted_predictions = format_predictions(eval_predictions, translit=translit)
     # print_metrics(eval_predictions, eval_dataset)
 
     duration = time.time() - start
@@ -145,6 +141,6 @@ if __name__ == "__main__":
     print("\nEvaluating")
     # print_metrics(eval_predictions, eval_dataset)
     # Task 2 Evaluation
-    scores = evaluate(
-        [dp[1] for dp in eval_data], formatted_predictions, task_id="t2"
-    )
+    if translit:
+        eval_data = convert_eval_if_translit(eval_data)
+    scores = evaluate([dp[1] for dp in eval_data], formatted_predictions, task_id="t2")
