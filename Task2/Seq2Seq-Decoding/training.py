@@ -30,17 +30,11 @@ def get_loss(batch, encoder, decoder, tag_classifier, device, pad_tag):
     stems = stems.flatten(end_dim=-2)
     stems = stems[decoder_indices].contiguous()
 
-    # print(stems.shape)
-    # print(encoded.shape)
-    # print(char_embeddings.shape)
-    # print(token_lengths.shape)
-
     y_pred_decoder = decoder(stems[:, :-1], encoded, char_embeddings, token_lengths)
 
     # Calculate losses
     tag_indices = (tags != pad_tag).flatten().nonzero().flatten()
     tags = tags.flatten()[tag_indices].contiguous()
-    # tag_loss = masked_cross_entropy_loss(y_pred_tags, tags, tag_lengths)
     tag_loss = F.cross_entropy(y_pred_tags, tags)
 
     stems = stems[:, 1:].flatten()
@@ -51,13 +45,6 @@ def get_loss(batch, encoder, decoder, tag_classifier, device, pad_tag):
     y_pred_decoder = y_pred_decoder[stem_indices].contiguous()
 
     decoder_loss = F.cross_entropy(y_pred_decoder, stems)
-
-    # decoder_lengths = (stems != 0).sum(dim=-1) - 1  # -1 for SOS token
-    # decoder_indices = decoder_lengths.nonzero().flatten()
-    # decoder_lengths = decoder_lengths[decoder_indices]
-    # decoder_loss = masked_cross_entropy_loss(
-    #    y_pred_decoder, stems[:, 1:], decoder_lengths
-    # )
 
     return tag_loss, decoder_loss
 

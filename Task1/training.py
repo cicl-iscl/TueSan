@@ -9,8 +9,9 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 
-def train(model, optimizer, dataloader, epochs, device):
-    criterion = nn.CrossEntropyLoss(ignore_index=0)
+def train(model, optimizer, criterion, dataloader, epochs, device):
+    # criterion = nn.CrossEntropyLoss(ignore_index=0)
+    model = model.to(device)
 
     running_loss = None
     for epoch in range(epochs):

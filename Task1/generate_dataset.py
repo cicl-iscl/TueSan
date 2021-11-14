@@ -7,6 +7,7 @@
 from tqdm import tqdm
 from helpers import get_task1_IO
 from edit_distance import SequenceMatcher as align
+from collections import defaultdict
 
 
 KEEP_RULE = "<COPY>"
@@ -102,7 +103,7 @@ def sent2rules(source, target):
 
 def construct_train_dataset(data):
     dataset = []
-    rules = set()
+    rules = defaultdict(int)
     discarded = 0
 
     # Extract rule for each sentence in dataset
@@ -112,14 +113,14 @@ def construct_train_dataset(data):
         try:
             # Get input and output sequences of equal length
             input, target = sent2rules(sandhied, unsandhied)
-            rules.update(set(target))
+            for rule in target:
+                rules[rule] += 1
             dataset.append((input, target))
 
         # Malformed sentences are discarded
         except AssertionError:
             discarded += 1
 
-    rules = list(sorted(rules))
     return dataset, rules, discarded
 
 

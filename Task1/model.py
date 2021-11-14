@@ -30,6 +30,21 @@ def build_optimizer(model):
     return torch.optim.AdamW(model.parameters())
 
 
+def build_loss(indexer, rules, device, class_weighting=False):
+    with torch.no_grad():
+        class_weights = torch.zeros(len(rules) + 1, device=device)
+        class_weights.required_grad = False
+
+        for index, rule in indexer.index2rule.items():
+            class_weights[index] = rules[rule]
+
+        class_weights = class_weights / class_weights.sum()
+        class_weights = 1 - class_weights
+
+    criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=0)
+    return criterion
+
+
 def save_model(model, optimizer, vocabulary, char2index, index2char, name):
     info = {
         "model_state_dict": model.state_dict(),

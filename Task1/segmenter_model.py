@@ -15,7 +15,8 @@ class SingleNgramEncoder(nn.Module):
             nn.ReLU(),
         )
 
-        self.transform = mlc(hidden_dim, hidden_dim, ngram, 2, dropout=dropout)
+        self.transform1 = mlc(hidden_dim, hidden_dim, ngram, 2, dropout=dropout)
+        # self.transform2 = mlc(hidden_dim, hidden_dim, ngram, 4, dropout=dropout)
 
     def forward(self, char_embeddings):
         # char_embeddings: shape (batch, #chars, features)
@@ -28,7 +29,10 @@ class SingleNgramEncoder(nn.Module):
         # shape (batch, hidden, #chars)
 
         # Apply nonlinear transform (more convolutions for context):
-        transformed = self.transform(ngram_embeddings)
+        transformed = self.transform1(ngram_embeddings)
+        # transformed2 = self.transform2(ngram_embeddings)
+        # transformed = torch.stack([transformed1, transformed2])
+        # transformed = torch.amax(transformed, dim = 0)
         # shape (batch, hidden, #chars)
 
         # Skip connection:
@@ -59,6 +63,7 @@ class SegmenterModel(nn.Module):
             SingleNgramEncoder(embedding_dim, hidden_dim, ngram, dropout=dropout)
             for ngram in range(2, max_ngram + 1)
         ]
+        self.ngram_encoders = nn.ModuleList(self.ngram_encoders)
         self.ngram_downsample = mlp(
             (max_ngram - 1) * hidden_dim, hidden_dim, 1, dropout=dropout
         )

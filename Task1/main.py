@@ -9,7 +9,7 @@ from helpers import load_data
 from uni2intern import internal_transliteration_to_unicode as to_uni
 from generate_dataset import construct_train_dataset, construct_eval_dataset
 from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
-from model import build_model, build_optimizer, save_model, load_model
+from model import build_model, build_optimizer, save_model, load_model, build_loss
 from training import train
 from predicting import make_predictions
 from helpers import save_task1_predictions
@@ -80,6 +80,7 @@ if __name__ == "__main__":
 
     # # Build optimizer
     optimizer = build_optimizer(model)  # may need config
+    criterion = build_loss(indexer, rules, device)
 
     # Train
     logger.info("Train\n")
@@ -87,7 +88,9 @@ if __name__ == "__main__":
     # criterion = get_loss(config)
     start = time.time()
 
-    model, optimizer = train(model, optimizer, train_dataloader, epochs, device)
+    model, optimizer = train(
+        model, optimizer, criterion, train_dataloader, epochs, device
+    )
 
     # Save model
     # name = config["name"]
