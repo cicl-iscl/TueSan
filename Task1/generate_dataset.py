@@ -100,36 +100,28 @@ def sent2rules(source, target):
     return input, output
 
 
-def construct_train_dataset(data, translit):
+def construct_train_dataset(data):
     dataset = []
     rules = set()
     discarded = 0
 
     # Extract rule for each sentence in dataset
-    for sentence in tqdm(data):
-        sent_id = sentence["sent_id"]
-        sandhied, unsandhied_tokenized = get_task1_IO(datapoint, translit=translit)
+    for sandhied, unsandhied_tokenized in tqdm(data):
         unsandhied = " ".join(unsandhied_tokenized)
 
         try:
             # Get input and output sequences of equal length
             input, target = sent2rules(sandhied, unsandhied)
             rules.update(set(target))
-            dataset.append((sent_id, input, target))
+            dataset.append((input, target))
 
         # Malformed sentences are discarded
         except AssertionError:
             discarded += 1
 
-    rules = list(sorted(all_rules))
+    rules = list(sorted(rules))
     return dataset, rules, discarded
 
 
-def construct_eval_dataset(data, translit):
-    dataset = []
-
-    for sentence in tqdm(data):
-        sandhied, _ = get_task1_IO(datapoint, translit=translit)
-        dataset.append(sandhied)
-
-    return dataset
+def construct_eval_dataset(data):
+    return [(sandhied, " ".join(unsandhied)) for sandhied, unsandhied in tqdm(data)]

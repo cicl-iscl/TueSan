@@ -6,7 +6,11 @@ in the input sequence only.
 
 import torch
 
+from functools import partial
 from generate_dataset import KEEP_RULE
+from torch.nn.utils.rnn import pad_sequence
+
+pad = partial(pad_sequence, batch_first=True)
 
 # We need a couple of special tokens:
 # Decoding: Need start of sequence (<S>) and end of sequence (</S>) tokens
@@ -22,14 +26,14 @@ specials = [PAD_TOKEN, UNK_TOKEN, SOS_TOKEN, EOS_TOKEN]
 
 def train_collate_fn(batch):
     source, target = zip(*batch)
-    source = pad_sequence(source)
-    target = pad_sequence(target)
+    source = pad(source)
+    target = pad(target)
 
     return source, target
 
 
 def eval_collate_fn(batch):
-    return pad_sequence(batch)
+    return pad(batch)
 
 
 class Indexer:
@@ -41,12 +45,11 @@ class Indexer:
         self.unk_index = self.char2index[UNK_TOKEN]
 
         self.rules = rules
-        self.rule2index = {rule: index for index, rule in enumerate(self.rules)}
-        self.index2rule = {index: rule for rule, index in self.rule2index}
+        self.rule2index = {rule: index + 1 for index, rule in enumerate(self.rules)}
+        self.index2rule = {index: rule for rule, index in self.rule2index.items()}
         self.keep_index = self.rule2index[KEEP_RULE]
 
     def index_sent(self, sent):
-        assert isinstance(sent, str)
         index = lambda char: self.char2index.get(char, self.unk_index)
         indexed_sent = list(map(index, sent))
         indexed_sent = torch.LongTensor(indexed_sent)
@@ -67,7 +70,7 @@ class Indexer:
 
         return indexed_rules
 
-    def restore_indexed_rules(indexed_rules):
+    def restore_indexed_rules(self, indexed_rules):
         restore = lambda idx: self.index2rule.get(idx, KEEP_RULE)
         restored_sent = list(map(restore, indexed_rules))
 
@@ -91,7 +94,7 @@ def make_indexer(data, rules):
     return indexer
 
 
-def index_data(train_data, eval_data, rules):
+def index_dataset(train_data, eval_data, rules):
     indexer = make_indexer(train_data, rules)
 
     # Index train data
@@ -103,6 +106,7 @@ def index_data(train_data, eval_data, rules):
         indexed_train_data.append((indexed_source, indexed_target))
 
     # Index eval data
+    eval_data = [source for source, *_ in eval_data]
     indexed_eval_data = list(map(indexer.index_sent, eval_data))
 
     return indexed_train_data, indexed_eval_data, indexer
