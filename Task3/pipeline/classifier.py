@@ -90,7 +90,7 @@ class Classifier(nn.Module):
 
         char_embeddings = pad_sequence(tokens, batch_first=True)
         # shape (batch, #chars, features)
-        token_lengths = torch.LongTensor(token_lengths)
+        token_lengths = torch.LongTensor(token_lengths).to(char_embeddings.device)
 
         return char_embeddings, token_lengths
 

@@ -35,6 +35,10 @@ def train(model, optimizer, dataloader, epochs, device):
 
         for (source, sandhi_target, stem_target, tag_target, boundaries) in batches:
             optimizer.zero_grad()
+            
+            sandhi_target = sandhi_target.to(device)
+            stem_target = stem_target.to(device)
+            tag_target = tag_target.to(device)
 
             source = source.to(device)
             # source_lengths = (source != 0).sum(dim=-1).long().flatten()

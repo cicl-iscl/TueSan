@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     # Load data
     logger.info("Load data")
-    train_data = load_data(config["train_path"], translit)[:500]
+    train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
 
     logger.info(f"Loaded {len(train_data)} train sents")
