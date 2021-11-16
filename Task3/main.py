@@ -7,13 +7,14 @@ from torch.utils.data import DataLoader
 from helpers import load_data
 
 from uni2intern import internal_transliteration_to_unicode as to_uni
-from generate_dataset import construct_train_dataset, construct_eval_dataset
+from generate_dataset import construct_train_dataset
 from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
 from model import build_model, build_optimizer, save_model, load_model, build_loss
 from training import train
 from predicting import make_predictions
-from helpers import save_task1_predictions
+from helpers import save_task3_predictions
 from scoring import evaluate
+from stemming_rules import evaluate_coverage
 
 # from pathlib import Path
 import time
@@ -35,7 +36,7 @@ if __name__ == "__main__":
 
     # Load data
     logger.info("Load data")
-    train_data = load_data(config["train_path"], translit)
+    train_data = load_data(config["train_path"], translit)[:500]
     eval_data = load_data(config["eval_path"], translit)
 
     logger.info(f"Loaded {len(train_data)} train sents")
@@ -43,17 +44,26 @@ if __name__ == "__main__":
 
     # Generate datasets
     logger.info("Generate training dataset")
-    train_data, rules, discarded = construct_train_dataset(train_data)
+    train_data, sandhi_rules, stem_rules, tags, discarded = construct_train_dataset(
+        train_data
+    )
     logger.info(f"Training data contains {len(train_data)} sents")
-    logger.info(f"Collected {len(rules)} Sandhi rules")
+    logger.info(f"Collected {len(sandhi_rules)} Sandhi rules")
+    logger.info(f"Collected {len(stem_rules)} Stemming rules")
+    logger.info(f"Collected {len(tags)} morphological tags")
     logger.info(f"Discarded {discarded} invalid sents from train data")
 
+    evaluate_coverage(eval_data, stem_rules, logger)
+
+    # logger.info("Stem rules")
+    # for (t_pre, t_suf), (s_pre, s_suf) in stem_rules:
+    #    logger.info(f"{t_pre}, {t_suf} --> {s_pre}, {s_suf}")
+
     logger.info("Generate evaluation dataset")
-    eval_data = construct_eval_dataset(eval_data)
 
     # Build vocabulary and index the dataset
     indexed_train_data, indexed_eval_data, indexer = index_dataset(
-        train_data, eval_data, rules
+        train_data, eval_data, sandhi_rules, stem_rules, tags
     )
 
     logger.info(f"{len(indexer.vocabulary)} chars in vocab:\n{indexer.vocabulary}\n")
@@ -78,9 +88,8 @@ if __name__ == "__main__":
 
     model = model.to(device)
 
-    # # Build optimizer
+    # Build optimizer
     optimizer = build_optimizer(model)  # may need config
-    criterion = build_loss(indexer, rules, device)
 
     # Train
     logger.info("Train\n")
@@ -88,9 +97,7 @@ if __name__ == "__main__":
     # criterion = get_loss(config)
     start = time.time()
 
-    model, optimizer = train(
-        model, optimizer, criterion, train_dataloader, epochs, device
-    )
+    model, optimizer = train(model, optimizer, train_dataloader, epochs, device)
 
     # Save model
     # name = config["name"]
@@ -132,7 +139,7 @@ if __name__ == "__main__":
 
     # Create submission
     logger.info("Create submission files")
-    save_task1_predictions(predictions, duration)
+    save_task3_predictions(predictions, duration)
 
     # Evaluation
-    scores = evaluate(true_unsandhied, predictions, task_id="t1")
+    scores = evaluate(true_unsandhied, predictions, task_id="t3")

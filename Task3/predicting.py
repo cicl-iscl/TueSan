@@ -5,7 +5,7 @@ from reconstruct_translit import reconstruct_unsandhied as reconstruct_translit
 from reconstruct_uni import reconstruct_unsandhied
 from uni2intern import internal_transliteration_to_unicode as to_uni
 
-from generate_dataset import KEEP_RULE, APPEND_SPACE_RULE
+from sandhi_rules import KEEP_RULE, APPEND_SPACE_RULE
 
 
 def make_predictions(model, eval_dataloader, indexer, device, translit=False):

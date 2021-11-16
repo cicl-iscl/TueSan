@@ -46,17 +46,14 @@ class SingleNgramEncoder(nn.Module):
         return ngram_embeddings
 
 
-class SegmenterModel(nn.Module):
+class Encoder(nn.Module):
     def __init__(
-        self,
-        vocabulary_size,
-        num_classes,
-        embedding_dim,
-        hidden_dim,
-        max_ngram,
-        dropout=0.0,
+        self, vocabulary_size, embedding_dim, hidden_dim, max_ngram, dropout=0.0,
     ):
         super().__init__()
+
+        self.hidden_dim = hidden_dim
+        self.dropout = dropout
 
         self.embedding = nn.Embedding(vocabulary_size, embedding_dim, padding_idx=0)
         self.ngram_encoders = [
@@ -68,7 +65,6 @@ class SegmenterModel(nn.Module):
             (max_ngram - 1) * hidden_dim, hidden_dim, 1, dropout=dropout
         )
         self.transform = mlp(hidden_dim, hidden_dim, 2, dropout=dropout)
-        self.predictions = nn.Linear(hidden_dim, num_classes)
 
     def forward(self, source):
         # source: shape (batch, chars)
@@ -83,6 +79,32 @@ class SegmenterModel(nn.Module):
         transformed = self.transform(ngram_embeddings)
         ngram_embeddings = ngram_embeddings + transformed
 
-        scores = self.predictions(ngram_embeddings)
+        return ngram_embeddings
 
-        return scores
+
+class TripleHeadClassifier(nn.Module):
+    def __init__(self, encoder, num_sandhi_rules, num_stem_rules, num_tags):
+        super().__init__()
+
+        self.encoder = encoder
+        hidden_dim = self.encoder.hidden_dim
+        dropout = self.encoder.dropout
+
+        self.sandhi_rule_classifier = mlp(
+            hidden_dim, hidden_dim, 2, output_dim=num_sandhi_rules, dropout=dropout
+        )
+        self.stem_rule_classifier = mlp(
+            hidden_dim, hidden_dim, 2, output_dim=num_stem_rules, dropout=dropout
+        )
+        self.tag_classifier = mlp(
+            hidden_dim, hidden_dim, 2, output_dim=num_tags, dropout=dropout
+        )
+
+    def forward(self, source):
+        char_embeddings = self.encoder(source)
+
+        y_pred_sandhi = self.sandhi_rule_classifier(char_embeddings)
+        y_pred_stem = self.stem_rule_classifier(char_embeddings)
+        y_pred_tag = self.tag_classifier(char_embeddings)
+
+        return y_pred_sandhi, y_pred_stem, y_pred_tag

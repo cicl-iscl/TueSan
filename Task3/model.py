@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn as nn
 
-from segmenter_model import SegmenterModel
+from segmenter_model import Encoder, TripleHeadClassifier
 
 
 def build_model(config, indexer):
@@ -14,16 +14,18 @@ def build_model(config, indexer):
     dropout = config["dropout"]
 
     vocabulary_size = len(indexer.vocabulary)
-    num_classes = len(indexer.rules) + 1  # Add 1 for padding
+    num_sandhi_classes = len(indexer.sandhi_rules) + 1  # Add 1 for padding
+    num_stem_classes = len(indexer.stem_rules)
+    num_tag_classes = len(indexer.tags) + 1
 
-    return SegmenterModel(
-        vocabulary_size,
-        num_classes,
-        embedding_dim,
-        hidden_dim,
-        max_ngram,
-        dropout=dropout,
+    encoder = Encoder(
+        vocabulary_size, embedding_dim, hidden_dim, max_ngram, dropout=dropout,
     )
+
+    model = TripleHeadClassifier(
+        encoder, num_sandhi_classes, num_stem_classes, num_tag_classes
+    )
+    return model
 
 
 def build_optimizer(model):
