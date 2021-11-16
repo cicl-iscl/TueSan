@@ -14,10 +14,15 @@ import time
 
 def train(model, optimizer, dataloader, epochs, device):
     sandhi_criterion = nn.CrossEntropyLoss(ignore_index=0)
-    stem_criterion = nn.CTCLoss(zero_infinity=True)
-    tag_criterion = nn.CTCLoss(zero_infinity=True)
+    stem_criterion = nn.CrossEntropyLoss(ignore_index=0)
+    tag_criterion = nn.CrossEntropyLoss(ignore_index=0)
 
     model = model.to(device)
+    segmenter = model["segmenter"]
+    classifier = model["classifier"]
+
+    segmenter.train()
+    classifier.train()
 
     running_loss = None
     running_sandhi_loss = None
@@ -28,50 +33,26 @@ def train(model, optimizer, dataloader, epochs, device):
     for epoch in range(epochs):
         batches = tqdm(dataloader)
 
-        for (
-            source,
-            sandhi_target,
-            stem_target,
-            tag_target,
-            stem_target_lengths,
-            tag_target_lengths,
-        ) in batches:
+        for (source, sandhi_target, stem_target, tag_target, boundaries) in batches:
             optimizer.zero_grad()
 
             source = source.to(device)
-            source_lengths = (source != 0).sum(dim=-1).long().flatten()
+            # source_lengths = (source != 0).sum(dim=-1).long().flatten()
 
-            y_pred_sandhi, y_pred_stem, y_pred_tag = model(source)
+            y_pred_sandhi, char_embeddings = segmenter(source)
 
             y_pred_sandhi = y_pred_sandhi.flatten(end_dim=-2)
             sandhi_target = sandhi_target.flatten().long().to(device)
             sandhi_loss = sandhi_criterion(y_pred_sandhi, sandhi_target)
 
-            y_pred_stem = y_pred_stem.transpose(0, 1)
-            y_pred_stem = F.log_softmax(y_pred_stem, dim=-1)
-            stem_loss = stem_criterion(
-                y_pred_stem, stem_target, source_lengths, stem_target_lengths
-            )
-
-            y_pred_tag = y_pred_tag.transpose(0, 1)
-            y_pred_tag = F.log_softmax(y_pred_tag, dim=-1)
-            tag_loss = tag_criterion(
-                y_pred_tag, tag_target, source_lengths, tag_target_lengths
-            )
-
+            y_pred_stem, y_pred_tag = classifier(char_embeddings, boundaries)
+            stem_loss = stem_criterion(y_pred_stem, stem_target)
+            tag_loss = tag_criterion(y_pred_tag, tag_target)
             loss = sandhi_loss + stem_loss + tag_loss
 
             loss.backward()
-            clip_grad_norm_(model.parameters(), 1.0)
+            # clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
-
-            print(stem_target)
-            print(stem_target_lengths)
-            print()
-            print(tag_target)
-            print(tag_target_lengths)
-            print()
-            print(source_lengths)
 
             if torch.isnan(loss):
                 raise ValueError
@@ -107,6 +88,6 @@ def train(model, optimizer, dataloader, epochs, device):
                     running_tag_loss,
                 )
             )
-            time.sleep(0.2)
+            # time.sleep(0.2)
 
     return model, optimizer

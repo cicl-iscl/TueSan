@@ -46,15 +46,9 @@ class SingleNgramEncoder(nn.Module):
         return ngram_embeddings
 
 
-class SegmenterModel(nn.Module):
+class Encoder(nn.Module):
     def __init__(
-        self,
-        vocabulary_size,
-        embedding_dim,
-        hidden_dim,
-        max_ngram,
-        num_sandhi_classes,
-        dropout=0.0,
+        self, vocabulary_size, embedding_dim, hidden_dim, max_ngram, dropout=0.0,
     ):
         super().__init__()
 
@@ -71,9 +65,6 @@ class SegmenterModel(nn.Module):
             (max_ngram - 1) * hidden_dim, hidden_dim, 1, dropout=dropout
         )
         self.transform = mlp(hidden_dim, hidden_dim, 2, dropout=dropout)
-        self.sandhi_rule_classifier = mlp(
-            hidden_dim, hidden_dim, 2, output_dim=num_sandhi_classes, dropout=dropout
-        )
 
     def forward(self, source):
         # source: shape (batch, chars)
@@ -88,6 +79,4 @@ class SegmenterModel(nn.Module):
         transformed = self.transform(ngram_embeddings)
         ngram_embeddings = ngram_embeddings + transformed
 
-        y_pred_sandhi = self.sandhi_rule_classifier(ngram_embeddings)
-
-        return y_pred_sandhi, ngram_embeddings
+        return ngram_embeddings

@@ -124,5 +124,5 @@ def save_duration(duration, duration_file):
 
 
 def save_task3_predictions(list_of_task3_predictions, duration):
-    save_predictions(list_of_task1_predictions, "task3_predictions.json")
+    save_predictions(list_of_task3_predictions, "task3_predictions.json")
     save_duration({"duration": duration}, "task3_duration.json")

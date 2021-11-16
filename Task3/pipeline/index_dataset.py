@@ -26,30 +26,27 @@ specials = [PAD_TOKEN, UNK_TOKEN, SOS_TOKEN, EOS_TOKEN]
 
 
 def train_collate_fn(batch):
-    source, sandhi_target, stem_target, tag_target = zip(*batch)
+    source, sandhi_target, stem_target, tag_target, boundaries = zip(*batch)
     source = pad(source)
     sandhi_target = pad(sandhi_target)
 
-    stem_target_lengths = [len(target) for target in stem_target]
-    stem_target_lengths = torch.LongTensor(stem_target_lengths)
-    tag_target_lengths = [len(target) for target in tag_target]
-    tag_target_lengths = torch.LongTensor(tag_target_lengths)
+    num_tokens = sum([len(sent) for sent in boundaries])
+    stem_target = torch.cat(stem_target, dim=0).flatten().long()
+    tag_target = torch.cat(tag_target, dim=0).flatten().long()
 
-    stem_target = pad(stem_target)
-    tag_target = pad(tag_target)
+    try:
+        assert num_tokens == len(stem_target) == len(tag_target)
+    except AssertionError:
+        print(stem_target)
+        print(tag_target)
+        print(boundaries)
 
-    return (
-        source,
-        sandhi_target,
-        stem_target,
-        tag_target,
-        stem_target_lengths,
-        tag_target_lengths,
-    )
+    return (source, sandhi_target, stem_target, tag_target, boundaries)
 
 
 def eval_collate_fn(batch):
-    return pad(batch)
+    raw_source, source = zip(*batch)
+    return raw_source, pad(source)
 
 
 class Indexer:
@@ -80,7 +77,7 @@ class Indexer:
         self.unk_stem_rule_index = self.stem_rule2index[UNK_RULE]
 
         self.tags = [UNK_TOKEN] + list(sorted(set(tags)))
-        self.tag2index = {tag: index + 1 for index, tag in enumerate(self.tags)}
+        self.tag2index = {tag: index for index, tag in enumerate(self.tags)}
         self.index2tag = {index: tag for tag, index in self.tag2index.items()}
         self.unk_tag_index = self.tag2index[UNK_TOKEN]
 
@@ -162,7 +159,7 @@ def index_dataset(train_data, eval_data, sandhi_rules, stem_rules, tags):
 
     # Index train data
     indexed_train_data = []
-    for source, sandhi_target, stem_target, tag_target in train_data:
+    for source, sandhi_target, stem_target, tag_target, boundaries in train_data:
         indexed_source = indexer.index_sent(source)
         indexed_sandhi_target = indexer.index_sandhi_rules(sandhi_target)
         indexed_stem_target = indexer.index_stem_rules(stem_target)
@@ -174,11 +171,14 @@ def index_dataset(train_data, eval_data, sandhi_rules, stem_rules, tags):
                 indexed_sandhi_target,
                 indexed_stem_target,
                 indexed_tag_target,
+                boundaries,
             )
         )
 
     # Index eval data
-    eval_data = [source for source, *_ in eval_data]
-    indexed_eval_data = list(map(indexer.index_sent, eval_data))
+    indexed_eval_data = []
+    for raw_source, *_ in eval_data:
+        indexed_source = indexer.index_sent(raw_source)
+        indexed_eval_data.append((raw_source, indexed_source))
 
     return indexed_train_data, indexed_eval_data, indexer

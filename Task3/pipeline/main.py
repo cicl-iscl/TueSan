@@ -9,7 +9,7 @@ from helpers import load_data
 from uni2intern import internal_transliteration_to_unicode as to_uni
 from generate_dataset import construct_train_dataset
 from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
-from model import build_model, build_optimizer, save_model, load_model, build_loss
+from model import build_model, build_optimizer, save_model, load_model
 from training import train
 from predicting import make_predictions
 from helpers import save_task3_predictions
@@ -118,8 +118,8 @@ if __name__ == "__main__":
     predictions = make_predictions(
         model, eval_dataloader, indexer, device, translit=translit
     )
-    predictions = [predicted.split(" ") for predicted in predictions]
-    true_unsandhied = [to_uni(unsandhied).split(" ") for _, unsandhied in eval_data]
+    # predictions = [predicted.split(" ") for predicted in predictions]
+    # true_unsandhied = [to_uni(unsandhied).split(" ") for _, unsandhied in eval_data]
 
     # (false) end of prediction
     duration = time.time() - start
@@ -130,16 +130,17 @@ if __name__ == "__main__":
     idx = 0
 
     logger.info("Input sentence:")
-    logger.debug(eval_data[idx][0])
+    logger.debug(eval_data[idx])
 
     logger.info("Predicted segmentation:")
     logger.debug(predictions[idx])
-    logger.info("Gold segmentation:")
-    logger.debug(true_unsandhied[idx])
+    # logger.info("Gold segmentation:")
+    # logger.debug(true_unsandhied[idx])
 
     # Create submission
     logger.info("Create submission files")
     save_task3_predictions(predictions, duration)
 
     # Evaluation
-    scores = evaluate(true_unsandhied, predictions, task_id="t3")
+    ground_truth = [labels for _, labels in eval_data]
+    scores = evaluate(ground_truth, predictions, task_id="t3")
