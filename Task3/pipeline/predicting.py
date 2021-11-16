@@ -64,7 +64,7 @@ def make_predictions(model, eval_dataloader, indexer, device, translit=False):
             predicted_rules = torch.argmax(y_pred_sandhi, dim=-1)
             predicted_rules = predicted_rules.cpu().long().numpy().tolist()
 
-            lengths = (source != 0).sum(dim=-1).flatten().long().numpy().tolist()
+            lengths = (source != 0).sum(dim=-1).cpu().flatten().long().numpy().tolist()
             source = source.cpu().long().numpy().tolist()
 
             raw_rules = []

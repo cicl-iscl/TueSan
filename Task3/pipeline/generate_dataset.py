@@ -62,15 +62,15 @@ def construct_train_dataset(data):
             for sandhi_rule in sandhi_target:
                 sandhi_rules[sandhi_rule] += 1
 
-            try:
-                assert len(boundaries) == len(unsandhied_tokenized)
-            except AssertionError:
-                print(unsandhied)
-                print(sandhied)
-                print(boundaries)
-                print([sandhied[i:j] for i, j in boundaries])
-                print()
-                raise
+            #try:
+            assert len(boundaries) == len(unsandhied_tokenized)
+            #except AssertionError:
+            #    print(unsandhied)
+            #    print(sandhied)
+            #    print(boundaries)
+            #    print([sandhied[i:j] for i, j in boundaries])
+            #    print()
+            #    raise
 
         # Malformed sentences are discarded
         except AssertionError:
