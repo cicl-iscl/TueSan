@@ -54,28 +54,29 @@ def unicode_normalize(dict_item):
 # Modified to accomodate translit
 
 
-def get_task1_IO(json_entry, translit=False):
+def get_task3_IO(json_entry, translit=False):
     """
-    Returns the input (as a string) and the groundtruth (as a list of segmented words) for the task 1:
-    Word segmentation.
+    Returns the input (as a string) and the groundtruth (as a list of tuples with three values) for the task 3: Combined word segmentation & morphological parsing.
     Input: json object -> Json object for a DCS sentence
-    Output: tuple(String, List) -> A tuple of the sentence (words joined with sandhi)
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    and a flattened list of segmented words
+    Output: tuple(String, List of tuples) -> A tuple of the segmented sentence and a flattened list of tuples containing (word, stem, morph tag)
     """
 
+    # Each inner list is converted to a tuple
+    # Each inner list represents the analysis for a word
+    # The tuple contains (segmented word, stem, morphological-tag)
+    list_of_tuples = [
+        tuple(val) for sublist in json_entry["t3_ground_truth"] for val in sublist
+    ]
+    input = json_entry["joint_sentence"]
+
     if translit:
-        flattened_list = [
-            val for sublist in json_entry["t1_ground_truth"] for val in sublist
+        input = to_intern(input)
+        list_of_tuples = [
+            (to_intern(token), to_intern(stem), tag)
+            for token, stem, tag in list_of_tuples
         ]
-        return (
-            to_intern(json_entry["joint_sentence"]),
-            [to_intern(x) for x in flattened_list],
-        )
-    else:
-        flattened_list = [
-            val for sublist in json_entry["t1_ground_truth"] for val in sublist
-        ]
-        return (json_entry["joint_sentence"], flattened_list)
+
+    return (input, list_of_tuples)
 
 
 # Loading dataset from json file
@@ -84,19 +85,11 @@ def get_task1_IO(json_entry, translit=False):
 def load_data(file_path, translit=False):
     with open(file_path, encoding="utf-8") as data_file:
         data = [unicode_normalize(item) for item in json.load(data_file)]
-        data = [get_task1_IO(sentence, translit) for sentence in data]
+        data = [get_task3_IO(sentence, translit) for sentence in data]
         # data = {
         #     sentence["sent_id"]: get_task1_IO(sentence, translit) for sentence in data
         # }  # dictionaary indexed by seent_id
         return data
-
-
-# Load sanskrit dictionary
-
-
-def load_sankrit_dictionary(file_path):
-    with open(file_path, "rb") as sanskrit_dict:
-        return pickle.load(sanskrit_dict)
 
 
 # Check input-output pair for a specific sentence
@@ -130,6 +123,6 @@ def save_duration(duration, duration_file):
         json.dump(duration, f, ensure_ascii=False)
 
 
-def save_task1_predictions(list_of_task1_predictions, duration):
-    save_predictions(list_of_task1_predictions, "task1_predictions.json")
-    save_duration({"duration": duration}, "task1_duration.json")
+def save_task3_predictions(list_of_task3_predictions, duration):
+    save_predictions(list_of_task1_predictions, "task3_predictions.json")
+    save_duration({"duration": duration}, "task3_duration.json")
