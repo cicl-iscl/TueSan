@@ -12,6 +12,9 @@ from tqdm import tqdm
 def train(model, optimizer, criterion, dataloader, epochs, device):
     # criterion = nn.CrossEntropyLoss(ignore_index=0)
     model = model.to(device)
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer, max_lr=0.05, epochs=epochs, steps_per_epoch=len(dataloader)
+    )
 
     running_loss = None
     for epoch in range(epochs):
@@ -27,15 +30,19 @@ def train(model, optimizer, criterion, dataloader, epochs, device):
             loss = criterion(y_pred, labels)
             loss.backward()
             optimizer.step()
+            scheduler.step()
 
             detached_loss = loss.detach().cpu().item()
+            lr = scheduler.get_last_lr()[0]
             if running_loss is None:
                 running_loss = detached_loss
             else:
                 running_loss = 0.95 * running_loss + 0.05 * detached_loss
 
             batches.set_postfix_str(
-                "Loss: {:.2f}, Running Loss: {:.2f}".format(detached_loss, running_loss)
+                "Loss: {:.2f}, Running Loss: {:.2f}, LR: {:.4f}".format(
+                    detached_loss, running_loss, lr
+                )
             )
 
     return model, optimizer

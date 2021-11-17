@@ -27,7 +27,7 @@ def build_model(config, indexer):
 
 
 def build_optimizer(model):
-    return torch.optim.AdamW(model.parameters())
+    return torch.optim.SGD(model.parameters(), 0.001)
 
 
 def build_loss(indexer, rules, device, class_weighting=False):
