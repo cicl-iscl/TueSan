@@ -46,6 +46,33 @@ poetry shell
 Data can be accessed from the server, `/data/jingwen/sanskrit/`.
 
 ### Error Analyses
+#### T1 Segmentation
+Trained for 20 epochs, using current hyperparameters in `config.cfg`.
+----
+```
+Duration: 2295.23 secs
+Scores
+----
+task_1_precision: 36.62
+task_1_recall: 42.17
+task_1_f1score: 39.20
+task_1_tscore: 42.17
+```
+- Example wrong prediction:
+```
+Source:	['d', 'r', 'a', 'v', 'y', 'A', 'B', 'A', 'v', 'e', ' ', 'd', 'v', 'i', 'j', 'A', 'B', 'A', 'v', 'e', ' ', 'p', 'r', 'a', 'v', 'A', 's', 'e', ' ', 'p', 'u', 't', 'r', 'a', 'j', 'a', 'n', 'm', 'a', 'n', 'i']
+Gold:	['d', 'r', 'a', 'v', 'y', 'a', ' ', 'a', 'B', 'A', 'v', 'e', ' ', 'd', 'v', 'i', 'j', 'a', ' ', 'a', 'B', 'A', 'v', 'e', ' ', 'p', 'r', 'a', 'v', 'A', 's', 'e', ' ', 'p', 'u', 't', 'r', 'a', ' ', 'j', 'a', 'n', 'm', 'a', 'n', 'i']
+Pred:	['d', 'r', 'a', 'v', 'ya ', 'a a', 'B', 'A', 'v', 'e', ' ', 'd', 'v', 'i', ' ', 'ja ', 'a a', 'B', 'A', 'v', 'e', ' ', 'p', 'r', 'a', 'v', 'A', 's', 'e', ' ', 'p', 'u', 't', 'r', 'a', ' ', 'j', 'a', 'n', 'm', 'a', 'n', 'i']
+Rules:	[('d', '<COPY>'), ('r', '<COPY>'), ('a', '<COPY>'), ('v', '<COPY>'), ('y', 'ya '), ('A', 'a a'), ('B', '<COPY>'), ('A', '<COPY>'), ('v', '<COPY>'), ('e', '<COPY>'), (' ', '<COPY>'), ('d', '<COPY>'), ('v', '<COPY>'), ('i', '<INSERT SPACE>'), ('j', 'ja '), ('A', 'a a'), ('B', '<COPY>'), ('A', '<COPY>'), ('v', '<COPY>'), ('e', '<COPY>'), (' ', '<COPY>'), ('p', '<COPY>'), ('r', '<COPY>'), ('a', '<COPY>'), ('v', '<COPY>'), ('A', '<COPY>'), ('s', '<COPY>'), ('e', '<COPY>'), (' ', '<COPY>'), ('p', '<COPY>'), ('u', '<COPY>'), ('t', '<COPY>'), ('r', '<COPY>'), ('a', '<INSERT SPACE>'), ('j', '<COPY>'), ('a', '<COPY>'), ('n', '<COPY>'), ('m', '<COPY>'), ('a', '<COPY>'), ('n', '<COPY>'), ('i', '<COPY>')]
+S:	dravyABAve dvijABAve pravAse putrajanmani
+G:	dravya aBAve dvija aBAve pravAse putra janmani
+P:	dravya a aBAve dvi ja a aBAve pravAse putra janmani
+```
+
+- Observations
+    - **Over application of `<INSERT SPACE>` rule**, resulting in a number of single characters, one simple thing to do is maybe postproces the predictions to (randomly) merge these characters its predecessor and successor.
+        - For forms like `dravya a aBAve` and `ja a aBAve`, choose to ignore the middle `a`?  
+
 ----
 #### T2 RuleClassification
 - Example wrong prediction:  
