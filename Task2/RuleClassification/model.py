@@ -62,7 +62,9 @@ def build_optimizer(model, config):
     weight_decay = config.get("weight_decay", 0.01)
 
     # optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-    optimizer = torch.optim.SGD(model.parameters(), lr=lr, weight_decay=weight_decay)
+    optimizer = torch.optim.SGD(
+        model.parameters(), lr=lr, weight_decay=weight_decay, momentum=0.9
+    )
 
     return optimizer
 

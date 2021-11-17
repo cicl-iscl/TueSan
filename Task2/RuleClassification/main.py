@@ -61,7 +61,7 @@ if __name__ == "__main__":
     else:
         logger.info("Morphological tags are predicted separately from stems")
 
-    # evaluate_coverage(eval_data, stem_rules, logger, tag_rules)
+    evaluate_coverage(eval_data, stem_rules, logger, tag_rules)
 
     logger.info("Index dataset")
 
