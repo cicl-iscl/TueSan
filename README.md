@@ -47,8 +47,8 @@ Data can be accessed from the server, `/data/jingwen/sanskrit/`.
 
 ### Error Analyses
 #### T1 Segmentation
-Trained for 20 epochs, using current hyperparameters in `config.cfg`.
 ----
+Trained for 20 epochs, using current hyperparameters in `config.cfg`.
 ```
 Duration: 2295.23 secs
 Scores
