@@ -70,7 +70,7 @@ P:	dravya a aBAve dvi ja a aBAve pravAse putra janmani
 ```
 
 - Observations
-    - **Over application of `<INSERT SPACE>` rule**, resulting in a number of single characters, one simple thing to do is maybe postproces the predictions to (randomly) merge these characters its predecessor and successor.
+    - **Over application of `<INSERT SPACE>` rule**, resulting in a number of single characters, one simple thing to do is maybe postprocess the predictions to (randomly) merge these characters with their predecessors and successors.
         - For forms like `dravya a aBAve` and `ja a aBAve`, choose to ignore the middle `a`?  
 
 ----
