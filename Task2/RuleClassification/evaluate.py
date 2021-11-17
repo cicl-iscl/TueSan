@@ -3,100 +3,122 @@ import torch
 from tqdm import tqdm
 from functools import partial
 from sklearn.metrics import accuracy_score
-from training import get_loss
-from extract_rules import rule_is_applicable
-from extract_rules import UNK_RULE
-from vocabulary import UNK_TOKEN
 from collections import defaultdict
+from stemming_rules import apply_rule
+from index_dataset import UNK_TOKEN
 
 from uni2intern import internal_transliteration_to_unicode as to_uni
 
 
-def evaluate_model(model, eval_dataloader, device, rules, rule_encoder, tag_encoder):
-    index2rule = defaultdict(lambda: UNK_RULE)
-    index2rule.update({index: rule for rule, index in rule_encoder.items()})
+def get_applicable_rules(token, indexer, tag_rules):
+    candidate_stems = []
+    candidate_tags = []
+    candidate_rule_indices = []
 
-    if tag_encoder is not None:
-        index2tag = defaultdict(lambda: UNK_TOKEN)
-        index2tag.update({index: tag for tag, index in tag_encoder.items()})
+    for rule, index in indexer.stem_rule2index.items():
+        try:
+            candidate_stem = apply_rule(token, rule)
+            candidate_stems.append(candidate_stem)
+            candidate_rule_indices.append(index)
 
-    predictions = []
+            if tag_rules:
+                candidate_tags.append(rule[-1])
+        except ValueError:
+            continue
 
-    encoder = model["encoder"]
-    classifiers = model["classifiers"]
+    return candidate_stems, candidate_tags, candidate_rule_indices
 
-    encoder.eval()
-    classifiers.eval()
 
-    batch_processor = partial(
-        get_loss, encoder=encoder, classifiers=classifiers, device=device
+def get_stem_prediction(token, indexer, y_pred_stem, tag_rules):
+    candidate_stems, candidate_tags, candidate_rule_indices = get_applicable_rules(
+        token, indexer, tag_rules
     )
 
+    if len(candidate_stems) == 0:
+        predicted_stem = token
+
+    elif len(candidate_stems) == 1:
+        predicted_stem = candidate_stems[0]
+
+        if tag_rules:
+            predicted_tag = candidate_tags[0]
+
+    else:
+        scores = y_pred_stem[candidate_rule_indices]
+        best_index = torch.argmax(scores).cpu().item()
+        predicted_stem = candidate_stems[best_index]
+
+        if tag_rules:
+            predicted_tag = candidate_tags[best_index]
+
+    if tag_rules:
+        return predicted_stem, predicted_tag
+    else:
+        return predicted_stem
+
+
+def evaluate_batch(model, batch, indexer, device, tag_rules):
+    encoder = model["encoder"]
+    stem_rule_classifier = model["stem_rule_classifier"]
+
+    encoder.eval()
+    stem_rule_classifier.eval()
+
+    if not tag_rules:
+        tag_classifier = model["tag_classifier"]
+        tag_classifier.eval()
+
+    raw_tokens, indexed_tokens = batch
+    indexed_tokens = indexed_tokens.to(device)
+
+    token_embeddings = encoder(indexed_tokens)
+    y_pred_stem = stem_rule_classifier(token_embeddings)
+
+    if not tag_rules:
+        y_pred_tag = tag_classifier(token_embeddings)
+
+    token_pointer = 0
+
+    batch_predictions = []
+    for sentence in raw_tokens:
+        sent_predictions = []
+
+        for token in sentence:
+            stem_scores = y_pred_stem[token_pointer]
+            if tag_rules:
+                predicted_stem, predicted_tag = get_stem_prediction(
+                    token, indexer, stem_scores, tag_rules
+                )
+            else:
+                predicted_stem = get_stem_prediction(
+                    token, indexer, stem_scores, tag_rules
+                )
+
+                tag_scores = y_pred_tag[token_pointer]
+                predicted_tag_index = torch.argmax(tag_scores).cpu().item()
+                predicted_tag = indexer.index2tag[predicted_tag_index]
+
+            sent_predictions.append([predicted_stem, predicted_tag])
+            token_pointer += 1
+
+        batch_predictions.append(sent_predictions)
+
+    assert token_pointer == token_embeddings.shape[0]
+    return batch_predictions
+
+
+def evaluate_model(model, eval_dataloader, indexer, device, tag_rules, translit):
+    predictions = []
     with torch.no_grad():
         for batch in tqdm(eval_dataloader):
-            raw_tokens, raw_stems, *batch = batch
-            loss, _, (y_pred_rule, y_pred_tag) = batch_processor(batch)
+            batch_predictions = evaluate_batch(model, batch, indexer, device, tag_rules)
+            predictions.extend(batch_predictions)
 
-            running_index = 0
+    if translit:
+        predictions = [
+            [[to_uni(stem), tag] for stem, tag in sent] for sent in predictions
+        ]
 
-            for sentence, stems in zip(raw_tokens, raw_stems):
-                tag_predictions = []
-                stem_predictions = []
-
-                for token, stem in zip(sentence, stems):
-                    rule_probs = y_pred_rule[running_index]
-                    candidate_stems = []
-                    candidate_rules = []
-
-                    # Find applicable rules
-                    for rule in rules:
-                        is_applicable, candidate_stem = rule_is_applicable(rule, token)
-                        if is_applicable:
-                            candidate_rules.append(rule)
-                            candidate_stems.append(candidate_stem)
-
-                    indexed_candidate_rules = [
-                        rule_encoder[rule] for rule in candidate_rules
-                    ]
-                    indexed_candidate_rules = torch.LongTensor(indexed_candidate_rules)
-
-                    if len(candidate_rules) == 0:
-                        predicted_rule = UNK_RULE
-                        predicted_stem = token
-                        predicted_tag = UNK_TOKEN
-
-                    elif len(candidate_rules) == 1:
-                        predicted_rule = candidate_rules[0]
-                        predicted_stem = candidate_stems[0]
-                        if len(predicted_rule) == 4:
-                            predicted_tag = predicted_rule[3]
-                        else:
-                            predicted_tag = None
-
-                    else:
-                        candidate_rule_probs = rule_probs[indexed_candidate_rules]
-                        best_rule_index = torch.argmax(candidate_rule_probs).item()
-
-                        predicted_rule = candidate_rules[best_rule_index]
-                        predicted_stem = candidate_stems[best_rule_index]
-
-                        if len(predicted_rule) == 4:
-                            predicted_tag = predicted_rule[3]
-                        else:
-                            predicted_tag = None
-
-                    if y_pred_tag is not None:
-                        tag_probs = y_pred_tag[running_index]
-                        best_tag_index = torch.argmax(tag_probs).item()
-                        predicted_tag = index2tag[best_tag_index]
-
-                    # sentence_predictions.append((token, stem, predicted_rule, predicted_stem, predicted_tag))
-                    stem_predictions.append(predicted_stem)
-                    tag_predictions.append(predicted_tag)
-                    running_index += 1
-
-                predictions.append((tag_predictions, stem_predictions))
-            assert running_index == y_pred_rule.shape[0]
     return predictions
 
 

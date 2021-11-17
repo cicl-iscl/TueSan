@@ -3,103 +3,92 @@ Implements the training loop
 """
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 from tqdm import tqdm
 from functools import partial
-from loss import masked_cross_entropy_loss
 from torch.nn.utils import clip_grad_value_
-
-from sklearn.metrics import accuracy_score
-
-
-def classifier_loss(classifier, encoded, y_true):
-    # Predict
-    y_pred = classifier(encoded)
-    y_pred = y_pred.flatten(end_dim=-2)
-    y_true = y_true.flatten()
-
-    mask = torch.nonzero((y_true != 0)).flatten()
-    y_true = y_true[mask].contiguous()
-    loss = F.cross_entropy(y_pred, y_true)
-
-    with torch.no_grad():
-        y_pred_max = torch.argmax(y_pred, dim=-1).cpu().numpy()
-        y_true = y_true.cpu().numpy()
-
-        accuracy = accuracy_score(y_pred_max, y_true)
-
-    return loss, accuracy, y_pred
+from torch.optim.lr_scheduler import OneCycleLR
 
 
-def get_loss(batch, encoder, classifiers, device):
-    tokens = batch[0].to(device)
-
-    # Encode input sentence
-    token_embeddings = encoder(tokens)
-
-    # Predict rules
-    rules_true = batch[1].long().to(device)
-    rule_loss, rule_accuracy, y_pred_rule = classifier_loss(
-        classifiers["rules"], token_embeddings, rules_true
-    )
-
-    # Predict tags and calculate loss (optional)
-    if len(batch) == 3:
-        tags_true = batch[2].long().to(device)
-        tag_loss, tag_accuracy, y_pred_tag = classifier_loss(
-            classifiers["tags"], token_embeddings, tags_true
-        )
+def calculate_running_average(running, loss, gamma):
+    if running is None:
+        return loss
     else:
-        tag_loss = 0.0
-        tag_accuracy = rule_accuracy
-        y_pred_tag = None
-
-    accuracy = (rule_accuracy + tag_accuracy) / 2
-
-    return rule_loss + tag_loss, accuracy, (y_pred_rule, y_pred_tag)
+        return gamma * running + (1 - gamma) * loss
 
 
-def train(model, optimizer, dataloader, epochs, device):
+def train(model, optimizer, dataloader, epochs, device, tag_rules):
     encoder = model["encoder"]
-    classifiers = model["classifiers"]
+    stem_rule_classifier = model["stem_rule_classifier"]
 
     encoder.train()
-    classifiers.train()
+    stem_rule_classifier.train()
 
-    batch_loss = partial(
-        get_loss, encoder=encoder, classifiers=classifiers, device=device
+    if not tag_rules:
+        tag_classifier = model["tag_classifier"]
+        tag_classifier.train()
+
+    scheduler = OneCycleLR(
+        optimizer, 0.05, epochs=epochs, steps_per_epoch=len(dataloader)
     )
-    running_loss = None
-    running_accuracy = 0.0
+
+    running_stem_loss = None
+    running_tag_loss = None
+    running_average = partial(calculate_running_average, gamma=0.95)
+
+    criterion = nn.CrossEntropyLoss(ignore_index=0)
 
     for epoch in range(epochs):
         batches = tqdm(dataloader)
 
         for batch in batches:
             optimizer.zero_grad()
-            loss, accuracy, _ = batch_loss(batch)
+            # loss, (rule_accuracy, tag_accuracy), _ = batch_loss(batch)
+
+            if tag_rules:
+                tokens, stem_rules_true = batch
+            else:
+                tokens, stem_rules_true, tags_true = batch
+
+            tokens = tokens.to(device)
+            stem_rules_true = stem_rules_true.to(device)
+
+            if not tag_rules:
+                tags_true = tags_true.to(device)
+
+            # Encode input sentence
+            token_embeddings = encoder(tokens)
+            y_pred_stem = stem_rule_classifier(token_embeddings)
+            stem_loss = criterion(y_pred_stem, stem_rules_true)
+
+            if not tag_rules:
+                y_pred_tag = tag_classifier(token_embeddings)
+                tag_loss = criterion(y_pred_tag, tags_true)
+            else:
+                tag_loss = torch.tensor(0.0)
 
             # Train model
+            loss = stem_loss + tag_loss
             loss.backward()
             # Clip gradient values (can make training more stable)
-            clip_grad_value_(encoder.parameters(), 1.0)
-            clip_grad_value_(classifiers.parameters(), 10.0)
+            # clip_grad_value_(encoder.parameters(), 1.0)
+            # clip_grad_value_(classifiers.parameters(), 10.0)
             optimizer.step()
+            scheduler.step()
 
             # Display loss
-            detached_loss = loss.detach().cpu().item()
+            detached_stem_loss = stem_loss.detach().cpu().item()
+            detached_tag_loss = tag_loss.detach().cpu().item()
+            lr = scheduler.get_last_lr()[0]
 
-            if running_loss is None:
-                running_loss = detached_loss
-            else:
-                running_loss = 0.99 * running_loss + 0.01 * detached_loss
-
-            running_accuracy = 0.95 * running_accuracy + 0.05 * accuracy
+            running_stem_loss = running_average(running_stem_loss, detached_stem_loss)
+            running_tag_loss = running_average(running_tag_loss, detached_tag_loss)
 
             batches.set_postfix_str(
-                "Total Running Loss: {:.2f}, Running Acc.: {:.2f}, Batch Loss: {:.2f}".format(
-                    running_loss, running_accuracy, detached_loss
+                "Stem Loss: {:.2f}, Tag Loss: {:.2f}, LR: {:.4f}".format(
+                    running_stem_loss, running_tag_loss, lr
                 )
             )
 

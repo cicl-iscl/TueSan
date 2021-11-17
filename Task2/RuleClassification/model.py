@@ -4,14 +4,12 @@ Helpers for building & saving model and optimizer
 
 import os
 import torch
-import torch.nn as nn
 
-from torch.optim import AdamW
+from mlp import mlp
 from encoder import Encoder
-from decoders import mlp_classifier_factory
 
 
-def build_model(config, vocabulary, classes, names):
+def build_model(config, indexer, tag_rules):
     # Read hyperparameters from config
     embedding_size = config["embedding_size"]
     encoder_hidden_size = config["encoder_hidden_size"]
@@ -21,31 +19,40 @@ def build_model(config, vocabulary, classes, names):
     classifer_num_layers = config["classifer_num_layers"]
     dropout = config["dropout"]
 
+    model = dict()
+
     # Make encoder, stem decoder, and tag classifier
     # Encoder
     encoder = Encoder(
-        len(vocabulary),
+        len(indexer.vocabulary),
         embedding_size,
         encoder_hidden_size,
         encoder_max_ngram,
         char2token_mode=encoder_char2token_mode,
         dropout=dropout,
     )
+    model["encoder"] = encoder
 
-    # Rule/Tag classifier -> morphological rules/tags
-    model = {"encoder": encoder}
-    model = nn.ModuleDict(model)
-    model["classifiers"] = nn.ModuleDict()
+    stem_rule_classifier = mlp(
+        encoder_hidden_size,
+        classifier_hidden_dim,
+        classifer_num_layers,
+        output_dim=len(indexer.stem_rules) + 1,
+        dropout=dropout,
+    )
+    model["stem_rule_classifier"] = stem_rule_classifier
 
-    for name, num_classes in zip(names, classes):
-        classifier = mlp_classifier_factory(
-            encoder.output_size,
+    if not tag_rules:
+        tag_classifier = mlp(
+            encoder_hidden_size,
             classifier_hidden_dim,
-            num_classes,
-            layers=classifer_num_layers,
+            classifer_num_layers,
+            output_dim=len(indexer.tags),
             dropout=dropout,
         )
-        model["classifiers"][name] = classifier
+        model["tag_classifier"] = tag_classifier
+
+    model = torch.nn.ModuleDict(model)
 
     return model
 
@@ -54,31 +61,22 @@ def build_optimizer(model, config):
     lr = config["learning_rate"]
     weight_decay = config.get("weight_decay", 0.01)
 
-    return AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    # optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    return optimizer
 
 
 def save_model(
-    model,
-    optimizer,
-    vocabulary,
-    rule_encoder,
-    tag_encoder,
-    char2index,
-    index2char,
-    name,
+    model, optimizer, indexer, stem_rules, tags, name,
 ):
-    rule_encoder = {key: value for key, value in rule_encoder.items()}
-    if tag_encoder is not None:
-        tag_encoder = {key: value for key, value in tag_encoder.items()}
 
     info = {
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
-        "vocabulary": vocabulary,
-        "rule_encoder": rule_encoder,
-        "tag_encoder": tag_encoder,
-        "char2index": char2index,
-        "index2char": index2char,
+        "indexer": indexer,
+        "stem_rules": stem_rules,
+        "tags": tags,
     }
 
     if not os.path.exists("./saved_models"):
