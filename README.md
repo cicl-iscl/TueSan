@@ -60,7 +60,7 @@ Not in candidates.
 - Observations
     - fails to generate rules in the first place (especially for **extremely short roots** like `ah`, `BU`, `kR`).
     - doesn't deal with irregular stems (from present stem `gacCa` cannot recover `gam`)
-    - doesn't deal with idiocyncratic forms of `yad`, `tad`, `idam`, for example model prediction for `saH` is:
+    - doesn't deal with idiosyncratic forms of `yad`, `tad`, `idam`, for example model prediction for `saH` is:
     ```
     Pred: n. sg. acc.	sas
     True: m. sg. nom.	tad
