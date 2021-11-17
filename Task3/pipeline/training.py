@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from torch.optim.lr_scheduler import OneCycleLR
 from torch.nn.utils import clip_grad_norm_
 
 from tqdm import tqdm
@@ -16,6 +17,8 @@ def train(model, optimizer, dataloader, epochs, device):
     sandhi_criterion = nn.CrossEntropyLoss(ignore_index=0)
     stem_criterion = nn.CrossEntropyLoss(ignore_index=0)
     tag_criterion = nn.CrossEntropyLoss(ignore_index=0)
+    
+    scheduler = OneCycleLR(optimizer, 0.1, epochs = epochs, steps_per_epoch = len(dataloader))
 
     model = model.to(device)
     segmenter = model["segmenter"]
@@ -57,6 +60,7 @@ def train(model, optimizer, dataloader, epochs, device):
             loss.backward()
             # clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
+            scheduler.step()
 
             if torch.isnan(loss):
                 raise ValueError
@@ -65,6 +69,7 @@ def train(model, optimizer, dataloader, epochs, device):
             detached_sandhi_loss = sandhi_loss.detach().cpu().item()
             detached_stem_loss = stem_loss.detach().cpu().item()
             detached_tag_loss = tag_loss.detach().cpu().item()
+            lr = scheduler.get_last_lr()[0]
 
             if running_loss is None:
                 running_loss = detached_loss
@@ -85,11 +90,12 @@ def train(model, optimizer, dataloader, epochs, device):
                 )
 
             batches.set_postfix_str(
-                "Loss: {:.2f}, Sandhi Loss: {:.2f}, Stem Loss: {:.2f}, Tag Loss: {:.2f}".format(
+                "Loss: {:.2f}, Sandhi Loss: {:.2f}, Stem Loss: {:.2f}, Tag Loss: {:.2f}, LR: {:.4f}".format(
                     running_loss,
                     running_sandhi_loss,
                     running_stem_loss,
                     running_tag_loss,
+                    lr
                 )
             )
             # time.sleep(0.2)

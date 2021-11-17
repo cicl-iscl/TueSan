@@ -53,7 +53,7 @@ def mlc(input_dim, hidden_dim, filter_size, num_layers, output_dim=None, dropout
 
         modules.append(nn.Dropout(p=dropout))
         modules.append(nn.Conv1d(in_size, out_size, filter_size, padding="same"))
-        modules.append(nn.BatchNorm1d(out_size))
+        #modules.append(nn.BatchNorm1d(out_size))
         modules.append(nn.ReLU())
 
     return nn.Sequential(*modules)
