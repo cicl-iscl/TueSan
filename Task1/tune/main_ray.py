@@ -264,16 +264,6 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
 
 def pred_eval(model, eval_dataloader, indexer, device, start, translit=False):
-
-    # Predictions
-    logger.info("Predict\n")
-    eval_dataloader = DataLoader(
-        indexed_eval_data,
-        batch_size=batch_size,
-        collate_fn=eval_collate_fn,
-        shuffle=False,
-    )
-
     predictions = make_predictions(
         model, eval_dataloader, indexer, device, translit=translit
     )
