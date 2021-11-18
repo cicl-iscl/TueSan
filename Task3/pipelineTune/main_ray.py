@@ -119,17 +119,16 @@ def train_model(
     # criterion = get_loss(config)
     start = time.time()
 
-    model, optimizer = train(model, optimizer, train_dataloader, epochs, device)
+    train(model, optimizer, train_dataloader, epochs, device)
 
 
 def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
-
-    # Define search space
+    # Test to see if things work as expected
     config = {
         "lr": tune.loguniform(1e-4, 1e-1),
         # "batch_size": tune.choice([32, 64, 128]),
         "batch_size": 64,
-        "epochs": tune.choice([10, 15, 20, 25]),
+        "epochs": tune.choice([1, 3]),
         "weight_decay": tune.loguniform(1e-4, 1e-1),
         "momentum": tune.choice([0, 0.9]),
         "nesterov": tune.choice([True, False]),
@@ -138,7 +137,7 @@ def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
         "hidden_dim": tune.choice([256, 512, 1024]),
         "embedding_dim": tune.choice([32, 64, 128, 256]),
         "name": "test_translit",
-        "translit": tune.choice([True, False]),
+        "translit": True,
         "train_path": "/data/jingwen/sanskrit/wsmp_train.json",
         "eval_path": "/data/jingwen/sanskrit/corrected_wsmp_dev.json",
         "train_graphml": "/data/jingwen/sanskrit/final_graphml_train",
@@ -150,6 +149,33 @@ def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
         "submission_dir": "result_submission",
         "checkpoint_dir": "./checkpoint",
     }
+    # Define search space
+    # config = {
+    #     "lr": tune.loguniform(1e-4, 1e-1),
+    #     # "batch_size": tune.choice([32, 64, 128]),
+    #     "batch_size": 64,
+    #     "epochs": tune.choice([10, 15, 20, 25]),
+    #     "weight_decay": tune.loguniform(1e-4, 1e-1),
+    #     "momentum": tune.choice([0, 0.9]),
+    #     "nesterov": tune.choice([True, False]),
+    #     "max_ngram": tune.choice([6, 7, 8, 9]),
+    #     "dropout": tune.choice([0, 0.1, 0.2, 0.3]),
+    #     "hidden_dim": tune.choice([256, 512, 1024]),
+    #     "embedding_dim": tune.choice([32, 64, 128, 256]),
+    #     "name": "test_translit",
+    #     "translit": tune.choice([True, False]),
+    #     "train_path": "/data/jingwen/sanskrit/wsmp_train.json",
+    #     "eval_path": "/data/jingwen/sanskrit/corrected_wsmp_dev.json",
+    #     "train_graphml": "/data/jingwen/sanskrit/final_graphml_train",
+    #     "eval_graphml": "/data/jingwen/sanskrit/graphml_dev",
+    #     "char2token_mode": "max",
+    #     "cuda": True,
+    #     "dictionary_path": "/data/jingwen/sanskrit/dictionary.pickle",
+    #     "out_folder": "../sanskrit",
+    #     "submission_dir": "result_submission",
+    #     "checkpoint_dir": "./checkpoint",
+    # }
+
     scheduler = ASHAScheduler(
         metric="loss",
         mode="min",
@@ -163,6 +189,37 @@ def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
         max_report_frequency=300,  # report every 5 min
     )
 
+    # ===================REPETITIVE CODE============================
+    # Load data
+    logger.info("Load data again...")
+    train_data = load_data(config["train_path"], translit)
+    eval_data = load_data(config["eval_path"], translit)
+
+    # Generate datasets
+    logger.info("Generate training dataset again...")
+    train_data, sandhi_rules, stem_rules, tags, discarded = construct_train_dataset(
+        train_data
+    )
+
+    logger.info("Generate evaluation dataset again...")
+
+    # Build vocabulary and index the dataset
+    indexed_train_data, indexed_eval_data, indexer = index_dataset(
+        train_data, eval_data, sandhi_rules, stem_rules, tags
+    )
+
+    # Build dataloaders
+    logger.info("Build training dataloader again...")
+    batch_size = config["batch_size"]
+
+    eval_dataloader = DataLoader(
+        indexed_eval_data,
+        batch_size=batch_size,
+        collate_fn=eval_collate_fn,
+        shuffle=False,
+    )
+    # ===================REPETITIVE CODE============================
+
     start = time.time()
     # Tuning
     result = tune.run(
@@ -170,7 +227,7 @@ def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
             train_model,
             checkpoint_dir=config["checkpoint_dir"],
         ),
-        resources_per_trial={"cpu": 4, "gpu": gpus_per_trial},
+        resources_per_trial={"cpu": 8, "gpu": gpus_per_trial},
         config=config,
         num_samples=num_samples,
         scheduler=scheduler,
@@ -202,19 +259,12 @@ def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
     model_state, optimizer_state = torch.load(Path(best_checkpoint_dir, "checkpoint"))
     best_trained_model.load_state_dict(model_state)
 
-    pred_eval(best_trained_model, indexer, device, start, translit=False)
-
-
-def pred_eval(model, indexer, device, start, translit=False):
-
-    # Predictions
-    logger.info("Predict\n")
-    eval_dataloader = DataLoader(
-        indexed_eval_data,
-        batch_size=batch_size,
-        collate_fn=eval_collate_fn,
-        shuffle=False,
+    pred_eval(
+        best_trained_model, eval_dataloader, indexer, device, start, translit=False
     )
+
+
+def pred_eval(model, eval_dataloader, indexer, device, start, translit=False):
 
     predictions = make_predictions(
         model, eval_dataloader, indexer, device, translit=translit
@@ -246,4 +296,5 @@ def pred_eval(model, indexer, device, start, translit=False):
 
 
 if __name__ == "__main__":
-    main(num_samples=10, max_num_epochs=25, gpus_per_trial=1)
+    main(num_samples=2, max_num_epochs=20, gpus_per_trial=1)  # test
+    # main(num_samples=20, max_num_epochs=25, gpus_per_trial=1)
