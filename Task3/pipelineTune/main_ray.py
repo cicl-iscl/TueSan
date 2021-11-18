@@ -3,6 +3,7 @@ import pickle
 
 import torch
 from torch.utils.data import DataLoader
+from functools import partial
 
 from helpers import load_data
 
@@ -153,6 +154,13 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
         batch_size=batch_size,
         collate_fn=train_collate_fn,
         shuffle=True,
+    )
+
+    eval_dataloader = DataLoader(
+        indexed_eval_data,
+        batch_size=batch_size,
+        collate_fn=eval_collate_fn,
+        shuffle=False,
     )
 
     start = time.time()
