@@ -107,7 +107,7 @@ def train_model(config, checkpoint_dir=None):
     # criterion = get_loss(config)
     start = time.time()
 
-    model, optimizer = train(
+    train(
         model,
         optimizer,
         criterion,
