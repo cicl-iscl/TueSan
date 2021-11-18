@@ -34,15 +34,65 @@ warnings.filterwarnings("ignore")
 
 
 def train_model(
-    search,
-    config,
-    indexer,
-    train_dataloader,
-    eval_dataloader,
+    search,  # so-called config
     checkpoint_dir=None,
 ):
+    # Read config
+    with open("config.cfg") as cfg:
+        config = json.load(cfg)
 
     translit = config["translit"]
+
+    # Load data
+    logger.info("Load data")
+    train_data = load_data(config["train_path"], translit)
+    eval_data = load_data(config["eval_path"], translit)
+
+    logger.info(f"Loaded {len(train_data)} train sents")
+    logger.info(f"Loaded {len(eval_data)} test sents")
+
+    # Generate datasets
+    logger.info("Generate training dataset")
+    train_data, sandhi_rules, stem_rules, tags, discarded = construct_train_dataset(
+        train_data
+    )
+    logger.info(f"Training data contains {len(train_data)} sents")
+    logger.info(f"Collected {len(sandhi_rules)} Sandhi rules")
+    logger.info(f"Collected {len(stem_rules)} Stemming rules")
+    logger.info(f"Collected {len(tags)} morphological tags")
+    logger.info(f"Discarded {discarded} invalid sents from train data")
+
+    evaluate_coverage(eval_data, stem_rules, logger)
+
+    # logger.info("Stem rules")
+    # for (t_pre, t_suf), (s_pre, s_suf) in stem_rules:
+    #    logger.info(f"{t_pre}, {t_suf} --> {s_pre}, {s_suf}")
+
+    logger.info("Generate evaluation dataset")
+
+    # Build vocabulary and index the dataset
+    indexed_train_data, indexed_eval_data, indexer = index_dataset(
+        train_data, eval_data, sandhi_rules, stem_rules, tags
+    )
+
+    logger.info(f"{len(indexer.vocabulary)} chars in vocab:\n{indexer.vocabulary}\n")
+
+    # Build dataloaders
+    logger.info("Build training dataloader")
+    batch_size = config["batch_size"]
+    train_dataloader = DataLoader(
+        indexed_train_data,
+        batch_size=batch_size,
+        collate_fn=train_collate_fn,
+        shuffle=True,
+    )
+
+    eval_dataloader = DataLoader(
+        indexed_eval_data,
+        batch_size=batch_size,
+        collate_fn=eval_collate_fn,
+        shuffle=False,
+    )
 
     # Build model
     logger.info("Build model")
@@ -106,77 +156,15 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
         metric_columns=["loss", "accuracy", "training_iteration"],
     )
 
-    # Read config
-    with open("config.cfg") as cfg:
-        config = json.load(cfg)
-
-    translit = config["translit"]
-
-    # Load data
-    logger.info("Load data")
-    train_data = load_data(config["train_path"], translit)
-    eval_data = load_data(config["eval_path"], translit)
-
-    logger.info(f"Loaded {len(train_data)} train sents")
-    logger.info(f"Loaded {len(eval_data)} test sents")
-
-    # Generate datasets
-    logger.info("Generate training dataset")
-    train_data, sandhi_rules, stem_rules, tags, discarded = construct_train_dataset(
-        train_data
-    )
-    logger.info(f"Training data contains {len(train_data)} sents")
-    logger.info(f"Collected {len(sandhi_rules)} Sandhi rules")
-    logger.info(f"Collected {len(stem_rules)} Stemming rules")
-    logger.info(f"Collected {len(tags)} morphological tags")
-    logger.info(f"Discarded {discarded} invalid sents from train data")
-
-    evaluate_coverage(eval_data, stem_rules, logger)
-
-    # logger.info("Stem rules")
-    # for (t_pre, t_suf), (s_pre, s_suf) in stem_rules:
-    #    logger.info(f"{t_pre}, {t_suf} --> {s_pre}, {s_suf}")
-
-    logger.info("Generate evaluation dataset")
-
-    # Build vocabulary and index the dataset
-    indexed_train_data, indexed_eval_data, indexer = index_dataset(
-        train_data, eval_data, sandhi_rules, stem_rules, tags
-    )
-
-    logger.info(f"{len(indexer.vocabulary)} chars in vocab:\n{indexer.vocabulary}\n")
-
-    # Build dataloaders
-    logger.info("Build training dataloader")
-    batch_size = config["batch_size"]
-    train_dataloader = DataLoader(
-        indexed_train_data,
-        batch_size=batch_size,
-        collate_fn=train_collate_fn,
-        shuffle=True,
-    )
-
-    eval_dataloader = DataLoader(
-        indexed_eval_data,
-        batch_size=batch_size,
-        collate_fn=eval_collate_fn,
-        shuffle=False,
-    )
-
     start = time.time()
     # Tuning
     result = tune.run(
         partial(
             train_model,
-            search=search,
-            config=config,
-            indexer=indexer,
-            train_dataloader=train_dataloader,
-            eval_dataloader=eval_dataloader,
-            checkpoint_dir=None,
+            checkpoint_dir="checkpoint",
         ),
         resources_per_trial={"cpu": 8, "gpu": gpus_per_trial},
-        # config=search,
+        config=search,
         num_samples=num_samples,
         scheduler=scheduler,
         progress_reporter=reporter,
