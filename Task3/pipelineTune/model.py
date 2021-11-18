@@ -7,17 +7,13 @@ from segmenter_model import SegmenterModel
 from classifier import Classifier
 
 
-def build_model(search, config, indexer):
+def build_model(config, indexer):
     # Read hyperparameters from config
-    # embedding_dim = config["embedding_dim"]
-    # hidden_dim = config["hidden_dim"]
-    # max_ngram = config["max_ngram"]
-    # dropout = config["dropout"]
+    embedding_dim = config["embedding_dim"]
+    hidden_dim = config["hidden_dim"]
+    max_ngram = config["max_ngram"]
+    dropout = config["dropout"]
     mode = config["char2token_mode"]
-    embedding_dim = search["embedding_dim"]
-    hidden_dim = search["hidden_dim"]
-    max_ngram = search["max_ngram"]
-    dropout = search["dropout"]
 
     vocabulary_size = len(indexer.vocabulary)
     num_sandhi_classes = len(indexer.sandhi_rules) + 1  # Add 1 for padding
@@ -45,12 +41,12 @@ def build_model(search, config, indexer):
     return model
 
 
-def build_optimizer(model, search):
+def build_optimizer(model, config):
     return torch.optim.SGD(
         model.parameters(),
-        lr=search["lr"],
-        momentum=search["momentum"],
-        nesterov=search["nesterov"],
+        lr=config["lr"],
+        momentum=config["momentum"],
+        nesterov=config["nesterov"],
     )
 
 
