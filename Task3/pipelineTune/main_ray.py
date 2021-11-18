@@ -241,11 +241,12 @@ def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
     best_trial = result.get_best_trial("loss", "min", "last")
     print("Best trial config: {}".format(best_trial.config))
     print("Best trial final validation loss: {}".format(best_trial.last_result["loss"]))
-    print(
-        "Best trial final validation accuracy: {}".format(
-            best_trial.last_result["accuracy"]
-        )
-    )
+    # ---- Have to tune.report accuracy ! ----
+    # print(
+    #     "Best trial final validation accuracy: {}".format(
+    #         best_trial.last_result["accuracy"]
+    #     )
+    # )
 
     best_trained_model = build_model(best_trial.config, config, indexer)
     device = "cpu"
@@ -299,7 +300,17 @@ def pred_eval(
     save_task3_predictions(predictions, duration)
 
     # Evaluation
-    ground_truth = [labels for _, labels in eval_data]
+    ground_truth = []
+    if translit:
+        ground_truth = []
+        for _, labels in eval_data:
+            translit_sent = []
+            for token, stem, tag in labels:
+                translit_sent.append([to_uni(token), to_uni(stem), tag])
+            ground_truth.append(translit_sent)
+
+    else:
+        ground_truth = [labels for _, labels in eval_data]
     scores = evaluate(ground_truth, predictions, task_id="t3")
 
 
