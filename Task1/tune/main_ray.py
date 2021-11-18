@@ -255,6 +255,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
     pred_eval(
         best_trained_model,
+        eval_data,
         eval_dataloader,
         indexer,
         device,
@@ -263,7 +264,9 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     )
 
 
-def pred_eval(model, eval_dataloader, indexer, device, start, translit=False):
+def pred_eval(
+    model, eval_data, eval_dataloader, indexer, device, start, translit=False
+):
     predictions = make_predictions(
         model, eval_dataloader, indexer, device, translit=translit
     )
