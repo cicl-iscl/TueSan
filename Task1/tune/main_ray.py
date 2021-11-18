@@ -117,8 +117,6 @@ def train_model(config, checkpoint_dir=None):
         config["checkpoint_dir"],
     )
 
-    return model, optimizer
-
 
 def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
@@ -171,6 +169,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     #     "dictionary_path": "/data/jingwen/sanskrit/dictionary.pickle",
     #     "out_folder": "../sanskrit",
     #     "submission_dir": "result_submission",
+    #     "checkpoint_dir": "./checkpoint",
     # }
 
     scheduler = ASHAScheduler(
@@ -183,7 +182,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     reporter = CLIReporter(
         parameter_columns=["epochs", "lr", "max_ngram", "hidden_dim", "embedding_dim"],
         metric_columns=["loss", "accuracy", "training_iteration"],
-        max_report_frequency=180,
+        max_report_frequency=300,  # report every 5 min
     )
 
     start = time.time()

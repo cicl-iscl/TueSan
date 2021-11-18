@@ -49,7 +49,7 @@ def train(model, optimizer, criterion, dataloader, epochs, device, checkpoint_di
             )
 
         with tune.checkpoint_dir(epoch) as checkpoint_dir:
-        	Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
+            Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
             path = Path(checkpoint_dir, "checkpoint")
             torch.save((model.state_dict(), optimizer.state_dict()), path)
 
