@@ -121,13 +121,8 @@ def train_model(
 
     model, optimizer = train(model, optimizer, train_dataloader, epochs, device)
 
-    with tune.checkpoint_dir(epoch) as checkpoint_dir:
-        path = Path(checkpoint_dir, "checkpoint").mkdir(parents=True, exist_ok=True)
-        torch.save((model.state_dict(), optimizer.state_dict()), path)
-    return model, optimizer, start
 
-
-def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
+def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
 
     # Define search space
     config = {
@@ -135,6 +130,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
         # "batch_size": tune.choice([32, 64, 128]),
         "batch_size": 64,
         "epochs": tune.choice([10, 15, 20, 25]),
+        "weight_decay": tune.loguniform(1e-4, 1e-1),
         "momentum": tune.choice([0, 0.9]),
         "nesterov": tune.choice([True, False]),
         "max_ngram": tune.choice([6, 7, 8, 9]),
@@ -152,6 +148,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
         "dictionary_path": "/data/jingwen/sanskrit/dictionary.pickle",
         "out_folder": "../sanskrit",
         "submission_dir": "result_submission",
+        "checkpoint_dir": "./checkpoint",
     }
     scheduler = ASHAScheduler(
         metric="loss",
@@ -163,6 +160,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
     reporter = CLIReporter(
         parameter_columns=["epochs", "lr", "max_ngram", "hidden_dim", "embedding_dim"],
         metric_columns=["loss", "accuracy", "training_iteration"],
+        max_report_frequency=300,  # report every 5 min
     )
 
     start = time.time()
@@ -170,13 +168,17 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
     result = tune.run(
         partial(
             train_model,
-            checkpoint_dir="checkpoint",
+            checkpoint_dir=config["checkpoint_dir"],
         ),
-        resources_per_trial={"cpu": 8, "gpu": gpus_per_trial},
+        resources_per_trial={"cpu": 4, "gpu": gpus_per_trial},
         config=config,
         num_samples=num_samples,
         scheduler=scheduler,
         progress_reporter=reporter,
+        name="T3_tune",
+        log_to_file=True,
+        fail_fast=True,  # stopping after first failure
+        # resume=True,
     )
 
     best_trial = result.get_best_trial("loss", "min", "last")
@@ -244,4 +246,4 @@ def pred_eval(model, indexer, device, start, translit=False):
 
 
 if __name__ == "__main__":
-    main(num_samples=10, max_num_epochs=25, gpus_per_trial=2)
+    main(num_samples=10, max_num_epochs=25, gpus_per_trial=1)
