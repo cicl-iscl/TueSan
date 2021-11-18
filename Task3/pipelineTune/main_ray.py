@@ -99,8 +99,8 @@ def train_model(
     use_cuda = use_cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
     logger.info(f"Using devide: {device}")
-    if use_cuda and torch.cuda.device_count() > 1:
-        model = nn.DataParallel(model)
+    # if use_cuda and torch.cuda.device_count() > 1:
+    #     model = nn.DataParallel(model)
     model = model.to(device)
 
     # Build optimizer
@@ -192,8 +192,8 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda:0"
-        if gpus_per_trial > 1:
-            best_trained_model = nn.DataParallel(best_trained_model)
+        # if gpus_per_trial > 1:
+        #     best_trained_model = nn.DataParallel(best_trained_model)
     best_trained_model.to(device)
 
     best_checkpoint_dir = best_trial.checkpoint.value
@@ -244,4 +244,4 @@ def pred_eval(model, indexer, device, start, translit=False):
 
 
 if __name__ == "__main__":
-    main(num_samples=10, max_num_epochs=20, gpus_per_trial=2)
+    main(num_samples=10, max_num_epochs=25, gpus_per_trial=2)
