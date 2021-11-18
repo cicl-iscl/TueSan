@@ -86,8 +86,6 @@ def make_predictions(model, eval_dataloader, indexer, device, translit=False):
                 boundaries.append(current_boundaries)
 
                 current_prediction = unsandhi(chars, rules)
-                if translit:
-                    current_prediction = to_uni(current_prediction)
 
                 sent_tokens = current_prediction.split(" ")
                 try:
@@ -137,6 +135,10 @@ def make_predictions(model, eval_dataloader, indexer, device, translit=False):
                     current_tag = indexer.index2tag[tag_index]
 
                     token_pointer += 1
+                    if translit:
+                        token = to_uni(token)
+                        current_stem = to_uni(current_stem)
+                    
                     sentence_prediction.append([token, current_stem, current_tag])
 
                 predictions.append(sentence_prediction)

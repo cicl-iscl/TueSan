@@ -103,7 +103,7 @@ class Classifier(nn.Module):
 
         # Calculate token embeddings
         tokens = self.char2token(char_embeddings, token_lengths)
-        # tokens = self.transform(tokens)
+        tokens = self.transform(tokens)
         # shape (#tokens, features)
 
         # Calculate prediction scores
