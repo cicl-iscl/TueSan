@@ -9,11 +9,10 @@ import torch.nn.functional as F
 from ray import tune
 
 from tqdm import tqdm
+from pathlib import Path
 
 
-def train(
-    model, optimizer, criterion, dataloader, epochs, device, checkpoint_dir="checkpoint"
-):
+def train(model, optimizer, criterion, dataloader, epochs, device, checkpoint_dir=None):
     # criterion = nn.CrossEntropyLoss(ignore_index=0)
     model = model.to(device)
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
@@ -50,7 +49,8 @@ def train(
             )
 
         with tune.checkpoint_dir(epoch) as checkpoint_dir:
-            path = Path(checkpoint_dir, "checkpoint").mkdir(parents=True, exist_ok=True)
+            path = Path(checkpoint_dir, "checkpoint")
+            path.mkdir(parents=True, exist_ok=True)
             torch.save((model.state_dict(), optimizer.state_dict()), path)
 
     return model, optimizer

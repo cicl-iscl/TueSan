@@ -108,13 +108,19 @@ def train_model(config, checkpoint_dir=None):
     start = time.time()
 
     model, optimizer = train(
-        model, optimizer, criterion, train_dataloader, epochs, device
+        model,
+        optimizer,
+        criterion,
+        train_dataloader,
+        epochs,
+        device,
+        config["checkpoint_dir"],
     )
 
     return model, optimizer
 
 
-def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
+def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
     # Test to see if things work as expected
     config = {
@@ -139,6 +145,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
         "dictionary_path": "/data/jingwen/sanskrit/dictionary.pickle",
         "out_folder": "../sanskrit",
         "submission_dir": "result_submission",
+        "checkpoint_dir": "./checkpoint",
     }
 
     # Define search space
@@ -176,6 +183,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
     reporter = CLIReporter(
         parameter_columns=["epochs", "lr", "max_ngram", "hidden_dim", "embedding_dim"],
         metric_columns=["loss", "accuracy", "training_iteration"],
+        max_report_frequency=180,
     )
 
     start = time.time()
@@ -184,13 +192,17 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
     result = tune.run(
         partial(
             train_model,
-            checkpoint_dir="checkpoint",
+            checkpoint_dir=config["checkpoint_dir"],
         ),
-        resources_per_trial={"cpu": 8, "gpu": gpus_per_trial},
-        config=config,
+        resources_per_trial={"cpu": 2, "gpu": gpus_per_trial},
+        config=config,  # our search space
         num_samples=num_samples,
         scheduler=scheduler,
         progress_reporter=reporter,
+        name="T1_tune",
+        log_to_file=True,
+        fail_fast=True,  # stopping after first failure
+        # resume=True,
     )
 
     best_trial = result.get_best_trial("loss", "min", "last")
