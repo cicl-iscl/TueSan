@@ -120,21 +120,21 @@ def train_model(config, checkpoint_dir=None):
 
 def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
 
-    # Define search space
+    # Test to see if things work as expected
     config = {
-        "lr": tune.loguniform(1e-4, 1e-1),
+        "lr": 0.01,
         # "batch_size": tune.choice([32, 64, 128]),
         "batch_size": 64,
-        "epochs": tune.choice([10, 15, 20, 25]),
-        "momentum": tune.choice([0, 0.9]),
-        "nesterov": tune.choice([True, False]),
-        "weight_decay": tune.loguniform(1e-4, 1e-1),
-        "max_ngram": tune.choice([6, 7, 8, 9]),
-        "dropout": tune.choice([0, 0.1, 0.2, 0.3]),
-        "hidden_dim": tune.choice([256, 512, 1024]),
+        "epochs": tune.choice([1, 5]),
+        "momentum": 0,
+        "nesterov": False,
+        "weight_decay": 0,
+        "max_ngram": 8,
+        "dropout": 0,
+        "hidden_dim": 512,
         "embedding_dim": tune.choice([32, 64, 128, 256]),
         "name": "test_translit",
-        "translit": tune.choice([True, False]),
+        "translit": True,
         "train_path": "/data/jingwen/sanskrit/wsmp_train.json",
         "eval_path": "/data/jingwen/sanskrit/corrected_wsmp_dev.json",
         "train_graphml": "/data/jingwen/sanskrit/final_graphml_train",
@@ -144,6 +144,31 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
         "out_folder": "../sanskrit",
         "submission_dir": "result_submission",
     }
+
+    # Define search space
+    # config = {
+    #     "lr": tune.loguniform(1e-4, 1e-1),
+    #     # "batch_size": tune.choice([32, 64, 128]),
+    #     "batch_size": 64,
+    #     "epochs": tune.choice([10, 15, 20, 25]),
+    #     "momentum": tune.choice([0, 0.9]),
+    #     "nesterov": tune.choice([True, False]),
+    #     "weight_decay": tune.loguniform(1e-4, 1e-1),
+    #     "max_ngram": tune.choice([6, 7, 8, 9]),
+    #     "dropout": tune.choice([0, 0.1, 0.2, 0.3]),
+    #     "hidden_dim": tune.choice([256, 512, 1024]),
+    #     "embedding_dim": tune.choice([32, 64, 128, 256]),
+    #     "name": "test_translit",
+    #     "translit": tune.choice([True, False]),
+    #     "train_path": "/data/jingwen/sanskrit/wsmp_train.json",
+    #     "eval_path": "/data/jingwen/sanskrit/corrected_wsmp_dev.json",
+    #     "train_graphml": "/data/jingwen/sanskrit/final_graphml_train",
+    #     "eval_graphml": "/data/jingwen/sanskrit/graphml_dev",
+    #     "cuda": True,
+    #     "dictionary_path": "/data/jingwen/sanskrit/dictionary.pickle",
+    #     "out_folder": "../sanskrit",
+    #     "submission_dir": "result_submission",
+    # }
 
     scheduler = ASHAScheduler(
         metric="loss",
