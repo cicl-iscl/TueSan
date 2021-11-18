@@ -270,8 +270,12 @@ def pred_eval(
     predictions = make_predictions(
         model, eval_dataloader, indexer, device, translit=translit
     )
-    predictions = [predicted.split(" ") for predicted in predictions]
-    true_unsandhied = [to_uni(unsandhied).split(" ") for _, unsandhied in eval_data]
+    if translit:
+        predictions = [to_uni(predicted).split(" ") for predicted in predictions]
+        true_unsandhied = [to_uni(unsandhied).split(" ") for _, unsandhied in eval_data]
+    else:
+        predictions = [predicted.split(" ") for predicted in predictions]
+        true_unsandhied = [unsandhied.split(" ") for _, unsandhied in eval_data]
 
     # (false) end of prediction
     duration = time.time() - start
