@@ -260,11 +260,19 @@ def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
     best_trained_model.load_state_dict(model_state)
 
     pred_eval(
-        best_trained_model, eval_dataloader, indexer, device, start, translit=False
+        best_trained_model,
+        eval_data,
+        eval_dataloader,
+        indexer,
+        device,
+        start,
+        translit=False,
     )
 
 
-def pred_eval(model, eval_dataloader, indexer, device, start, translit=False):
+def pred_eval(
+    model, eval_data, eval_dataloader, indexer, device, start, translit=False
+):
 
     predictions = make_predictions(
         model, eval_dataloader, indexer, device, translit=translit
