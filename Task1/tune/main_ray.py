@@ -14,12 +14,12 @@ from ray.tune import CLIReporter
 from ray.tune.schedulers import ASHAScheduler
 
 from helpers import load_data
-from uni2intern import internal_transliteration_to_unicode as to_uni
 from generate_dataset import construct_train_dataset, construct_eval_dataset
 from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
 from model import build_model, build_optimizer, save_model, load_model, build_loss
 from training import train
 from predicting import make_predictions
+from uni2intern import internal_transliteration_to_unicode as to_uni
 from helpers import save_task1_predictions
 from scoring import evaluate
 
@@ -125,7 +125,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         "lr": 0.01,
         # "batch_size": tune.choice([32, 64, 128]),
         "batch_size": 64,
-        "epochs": tune.choice([1, 5]),
+        "epochs": tune.choice([1, 3]),
         "momentum": 0,
         "nesterov": False,
         "weight_decay": 0,
@@ -193,7 +193,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             train_model,
             checkpoint_dir=config["checkpoint_dir"],
         ),
-        resources_per_trial={"cpu": 4, "gpu": gpus_per_trial},
+        resources_per_trial={"cpu": 8, "gpu": gpus_per_trial},
         config=config,  # our search space
         num_samples=num_samples,
         scheduler=scheduler,
@@ -207,11 +207,12 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     best_trial = result.get_best_trial("loss", "min", "last")
     print("Best trial config: {}".format(best_trial.config))
     print("Best trial final validation loss: {}".format(best_trial.last_result["loss"]))
-    print(
-        "Best trial final validation accuracy: {}".format(
-            best_trial.last_result["accuracy"]
-        )
-    )
+    # ---- Have to tune.report accuracy ! ----
+    # print(
+    #     "Best trial final validation accuracy: {}".format(
+    #         best_trial.last_result["accuracy"]
+    #     )
+    # )
 
     best_trained_model = build_model(best_trial.config, config, indexer)
     device = "cpu"
@@ -229,8 +230,9 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
 
 def pred_eval(model, indexer, device, start, config, translit=False):
-
+    # construct eval_data again
     eval_data = load_data(config["eval_path"], translit=config["translit"])
+    eval_data = construct_eval_dataset(eval_data)
 
     # Predictions
     logger.info("Predict\n")
@@ -273,4 +275,5 @@ def pred_eval(model, indexer, device, start, config, translit=False):
 
 
 if __name__ == "__main__":
-    main(num_samples=10, max_num_epochs=25, gpus_per_trial=1)
+    main(num_samples=2, max_num_epochs=20, gpus_per_trial=1)  # test
+    # main(num_samples=20, max_num_epochs=25, gpus_per_trial=1)
