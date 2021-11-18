@@ -37,9 +37,6 @@ def train_model(
     config,
     checkpoint_dir=None,
 ):
-    # Read config
-    with open("config.cfg") as cfg:
-        config = json.load(cfg)
 
     translit = config["translit"]
 
@@ -144,17 +141,16 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=2):
         "hidden_dim": tune.choice([256, 512, 1024]),
         "embedding_dim": tune.choice([32, 64, 128, 256]),
         "name": "test_translit",
-        "translit": true,
+        "translit": tune.choice([True, False]),
         "train_path": "/data/jingwen/sanskrit/wsmp_train.json",
         "eval_path": "/data/jingwen/sanskrit/corrected_wsmp_dev.json",
         "train_graphml": "/data/jingwen/sanskrit/final_graphml_train",
         "eval_graphml": "/data/jingwen/sanskrit/graphml_dev",
         "char2token_mode": "max",
-        "cuda": true,
+        "cuda": True,
         "dictionary_path": "/data/jingwen/sanskrit/dictionary.pickle",
         "out_folder": "../sanskrit",
         "submission_dir": "result_submission",
-        "checkpoint_dir": "checkpoint",
     }
     scheduler = ASHAScheduler(
         metric="loss",
