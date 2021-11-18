@@ -92,9 +92,9 @@ if __name__ == "__main__":
     optimizer = build_optimizer(model)  # may need config
 
     # Train
-    logger.info("Train\n")
     epochs = config["epochs"]
     start = time.time()
+    logger.info("Training for {epochs} epochs")
 
     model, optimizer = train(model, optimizer, train_dataloader, epochs, device)
 
@@ -141,5 +141,17 @@ if __name__ == "__main__":
     save_task3_predictions(predictions, duration)
 
     # Evaluation
-    ground_truth = [labels for _, labels in eval_data]
+    ground_truth = []
+    if translit:
+        ground_truth = []
+        for _, labels in eval_data:
+            translit_sent = []
+            for token, stem, tag in labels:
+                translit_sent.append([to_uni(token), to_uni(stem), tag])
+            ground_truth.append(translit_sent)
+
+    else:
+        ground_truth = [labels for _, labels in eval_data]
+        
+    
     scores = evaluate(ground_truth, predictions, task_id="t3")
