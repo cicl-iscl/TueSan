@@ -125,7 +125,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         "lr": 0.01,
         # "batch_size": tune.choice([32, 64, 128]),
         "batch_size": 64,
-        "epochs": tune.choice([1, 3]),
+        "epochs": tune.choice([1, 2]),
         "momentum": 0,
         "nesterov": False,
         "weight_decay": 0,
@@ -185,6 +185,33 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         max_report_frequency=300,  # report every 5 min
     )
 
+    # ================REPETITIVE CODE==========================
+    # Load data AGAIN for indexer...
+    logger.info("Load data again...")
+    train_data = load_data(config["train_path"], config["translit"])
+    eval_data = load_data(config["eval_path"], config["translit"])
+
+    # Generate datasets
+    logger.info("Generate training dataset again...")
+    train_data, rules, discarded = construct_train_dataset(train_data)
+
+    logger.info("Generate evaluation dataset again...")
+    eval_data = construct_eval_dataset(eval_data)
+
+    # Build vocabulary and index the dataset
+    indexed_train_data, indexed_eval_data, indexer = index_dataset(
+        train_data, eval_data, rules
+    )
+
+    batch_size = config["batch_size"]
+    eval_dataloader = DataLoader(
+        indexed_eval_data,
+        batch_size=batch_size,
+        collate_fn=eval_collate_fn,
+        shuffle=False,
+    )
+    # ================REPETITIVE CODE==========================
+
     start = time.time()
 
     # Tuning
@@ -214,7 +241,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     #     )
     # )
 
-    best_trained_model = build_model(best_trial.config, config, indexer)
+    best_trained_model = build_model(best_trial.config, indexer)
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda:0"
@@ -226,13 +253,17 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     model_state, optimizer_state = torch.load(Path(best_checkpoint_dir, "checkpoint"))
     best_trained_model.load_state_dict(model_state)
 
-    pred_eval(best_trained_model, indexer, device, start, translit=False)
+    pred_eval(
+        best_trained_model,
+        eval_dataloader,
+        indexer,
+        device,
+        start,
+        translit=False,
+    )
 
 
-def pred_eval(model, indexer, device, start, config, translit=False):
-    # construct eval_data again
-    eval_data = load_data(config["eval_path"], translit=config["translit"])
-    eval_data = construct_eval_dataset(eval_data)
+def pred_eval(model, eval_dataloader, indexer, device, start, translit=False):
 
     # Predictions
     logger.info("Predict\n")
