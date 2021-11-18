@@ -1,30 +1,30 @@
-import json
-import pickle
-
-import torch
-from torch.utils.data import DataLoader
-
-from helpers import load_data
-
-from uni2intern import internal_transliteration_to_unicode as to_uni
-from generate_dataset import construct_train_dataset
-from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
-from model import build_model, build_optimizer, save_model, load_model
-from training import train
-from predicting import make_predictions
-from helpers import save_task3_predictions
-from scoring import evaluate
-from stemming_rules import evaluate_coverage
-
-# from pathlib import Path
 import time
-from logger import logger
+import json
+import torch
 import pprint
-
-pp = pprint.PrettyPrinter(indent=4)
-
+import pickle
 import warnings
 
+from logger import logger
+from training import train
+from model import load_model
+from model import save_model
+from scoring import evaluate
+from helpers import load_data
+from model import build_model
+from model import build_optimizer
+from torch.utils.data import DataLoader
+from predicting import make_predictions
+from index_dataset import index_dataset
+from index_dataset import eval_collate_fn
+from index_dataset import train_collate_fn
+from helpers import save_task3_predictions
+from stemming_rules import evaluate_coverage
+from generate_dataset import construct_train_dataset
+from uni2intern import internal_transliteration_to_unicode as to_uni
+
+
+pp = pprint.PrettyPrinter(indent=4)
 warnings.filterwarnings("ignore")
 
 
@@ -94,7 +94,6 @@ if __name__ == "__main__":
     # Train
     logger.info("Train\n")
     epochs = config["epochs"]
-    # criterion = get_loss(config)
     start = time.time()
 
     model, optimizer = train(model, optimizer, train_dataloader, epochs, device)
