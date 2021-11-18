@@ -110,4 +110,4 @@ def train(model, optimizer, dataloader, epochs, device):
             path = Path(checkpoint_dir, "checkpoint")
             torch.save((model.state_dict(), optimizer.state_dict()), path)
 
-    return model, optimizer
+    tune.report(loss=running_loss)
