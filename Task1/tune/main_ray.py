@@ -193,7 +193,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             train_model,
             checkpoint_dir=config["checkpoint_dir"],
         ),
-        resources_per_trial={"cpu": 2, "gpu": gpus_per_trial},
+        resources_per_trial={"cpu": 4, "gpu": gpus_per_trial},
         config=config,  # our search space
         num_samples=num_samples,
         scheduler=scheduler,
@@ -273,4 +273,4 @@ def pred_eval(model, indexer, device, start, config, translit=False):
 
 
 if __name__ == "__main__":
-    main(num_samples=10, max_num_epochs=25, gpus_per_trial=2)
+    main(num_samples=10, max_num_epochs=25, gpus_per_trial=1)
