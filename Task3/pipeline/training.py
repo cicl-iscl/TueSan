@@ -34,7 +34,7 @@ def train(model, optimizer, dataloader, epochs, device):
     gamma = 0.95
 
     for epoch in range(epochs):
-        batches = tqdm(dataloader, desc = f"Epoch {epoch}")
+        batches = tqdm(dataloader, desc = f"Epoch {epoch+1}")
 
         for (source, sandhi_target, stem_target, tag_target, boundaries) in batches:
             optimizer.zero_grad()

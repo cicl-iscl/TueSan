@@ -15,7 +15,7 @@ class SingleNgramEncoder(nn.Module):
             nn.ReLU(),
         )
 
-        self.transform1 = mlc(hidden_dim, hidden_dim, ngram, 2, dropout=dropout)
+        self.transform1 = mlc(hidden_dim, hidden_dim, ngram, 3, dropout=dropout)
         # self.transform2 = mlc(hidden_dim, hidden_dim, ngram, 4, dropout=dropout)
 
     def forward(self, char_embeddings):
@@ -57,6 +57,7 @@ class SegmenterModel(nn.Module):
         dropout=0.0,
     ):
         super().__init__()
+        assert hidden_dim % 2 == 0, f"Hidden dim has to be even, but is {hidden_dim}"
 
         self.hidden_dim = hidden_dim
         self.dropout = dropout
@@ -70,7 +71,10 @@ class SegmenterModel(nn.Module):
         self.ngram_downsample = mlp(
             (max_ngram - 1) * hidden_dim, hidden_dim, 1, dropout=dropout
         )
-        self.transform = mlp(hidden_dim, hidden_dim, 2, dropout=dropout)
+        #self.transform = mlp(hidden_dim, hidden_dim, 2, dropout=dropout)
+        self.transform = LSTM(hidden_dim, hidden_dim // 2, num_layers=2, dropout=dropout)
+        
+        
         self.sandhi_rule_classifier = mlp(
             hidden_dim, hidden_dim, 2, output_dim=num_sandhi_classes, dropout=dropout
         )
@@ -85,7 +89,8 @@ class SegmenterModel(nn.Module):
         ngram_embeddings = torch.cat(ngram_embeddings, dim=-1)
         ngram_embeddings = self.ngram_downsample(ngram_embeddings)
 
-        transformed = self.transform(ngram_embeddings)
+        #transformed = self.transform(ngram_embeddings)
+        transformed = self.transform(ngram_embeddings, lengths)
         ngram_embeddings = ngram_embeddings + transformed
 
         y_pred_sandhi = self.sandhi_rule_classifier(ngram_embeddings)

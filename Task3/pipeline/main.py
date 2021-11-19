@@ -94,7 +94,7 @@ if __name__ == "__main__":
     # Train
     epochs = config["epochs"]
     start = time.time()
-    logger.info("Training for {epochs} epochs")
+    logger.info(f"Training for {epochs} epochs")
 
     model, optimizer = train(model, optimizer, train_dataloader, epochs, device)
 

@@ -74,6 +74,7 @@ class Classifier(nn.Module):
         self.tag_classifier = mlp(
             hidden_dim, hidden_dim, 2, output_dim=num_tag_classes, dropout=dropout
         )
+        self.token_norm = nn.LayerNorm((hidden_dim,))
 
     @staticmethod
     def convert_chars_to_tokens(char_embeddings, boundaries):
@@ -103,6 +104,7 @@ class Classifier(nn.Module):
 
         # Calculate token embeddings
         tokens = self.char2token(char_embeddings, token_lengths)
+        tokens = self.token_norm(tokens)
         tokens = self.transform(tokens)
         # shape (#tokens, features)
 
