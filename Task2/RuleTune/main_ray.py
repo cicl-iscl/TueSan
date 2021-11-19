@@ -115,9 +115,8 @@ def train_model(config, checkpoint_dir=None):
         checkpoint_dir=config["checkpoint_dir"],
     )
 
-def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
-if __name__ == "__main__":
+def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     # Test to see if things work as expected
     config = {
         "learning_rate": tune.loguniform(1e-4, 1e-1),
@@ -277,7 +276,9 @@ if __name__ == "__main__":
     )
 
 
-def pred_eval(model, eval_data, eval_dataloader, indexer, device, tag_rules, start, translit=False):
+def pred_eval(
+    model, eval_data, eval_dataloader, indexer, device, tag_rules, start, translit=False
+):
 
     eval_predictions = evaluate_model(
         model, eval_dataloader, indexer, device, tag_rules, translit
@@ -297,6 +298,7 @@ def pred_eval(model, eval_data, eval_dataloader, indexer, device, tag_rules, sta
     if translit:
         eval_data = convert_eval_if_translit(eval_data)
     scores = evaluate([dp[1] for dp in eval_data], eval_predictions, task_id="t2")
+
 
 if __name__ == "__main__":
     main(num_samples=2, max_num_epochs=20, gpus_per_trial=1)  # test
