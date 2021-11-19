@@ -186,10 +186,11 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     )
 
     # ================REPETITIVE CODE==========================
+    translit = config["translit"]
     # Load data AGAIN for indexer...
     logger.info("Load data again...")
-    train_data = load_data(config["train_path"], config["translit"])
-    eval_data = load_data(config["eval_path"], config["translit"])
+    train_data = load_data(config["train_path"], translit)
+    eval_data = load_data(config["eval_path"], translit)
 
     # Generate datasets
     logger.info("Generate training dataset again...")
@@ -260,7 +261,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         indexer,
         device,
         start,
-        translit=False,
+        translit=translit,
     )
 
 
