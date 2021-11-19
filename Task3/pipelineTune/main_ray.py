@@ -131,7 +131,7 @@ def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
         "epochs": tune.choice([1, 3]),
         "weight_decay": tune.loguniform(1e-4, 1e-1),
         "momentum": tune.choice([0, 0.9]),
-        "nesterov": tune.choice([True, False]),
+        "nesterov": False,
         "max_ngram": tune.choice([6, 7, 8, 9]),
         "dropout": tune.choice([0, 0.1, 0.2, 0.3]),
         "hidden_dim": tune.choice([256, 512, 1024]),
