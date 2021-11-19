@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ray import tune
 from tqdm import tqdm
 from pathlib import Path
 from functools import partial
