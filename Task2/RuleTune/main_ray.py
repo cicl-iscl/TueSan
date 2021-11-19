@@ -179,8 +179,17 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         reduction_factor=2,
     )
     reporter = CLIReporter(
-        parameter_columns=["epochs", "lr", "max_ngram", "hidden_dim", "embedding_dim"],
-        metric_columns=["loss", "accuracy", "training_iteration"],
+        parameter_columns=[
+            "epochs",
+            "learning_rate",
+            "embedding_dim",
+            "encoder_max_ngram",
+        ],
+        metric_columns=[
+            "loss",
+            "accuracy",
+            "training_iteration",
+        ],  # we don't have accuracy now
         max_report_frequency=300,  # report every 5 min
     )
 
