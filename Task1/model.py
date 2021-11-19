@@ -43,7 +43,7 @@ def build_loss(indexer, rules, device, class_weighting=False):
 
         class_weights = class_weights / class_weights.sum()
         class_weights = 1 - class_weights
-    
+
     if class_weighting:
         criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=0)
     else:

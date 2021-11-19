@@ -35,6 +35,7 @@ class SingleNgramEncoder(nn.Module):
     input_dim: Embeddings size
     ngram:     Filter size
     """
+
     def __init__(self, input_dim, hidden_dim, ngram, dropout=0.0):
         super().__init__()
 
@@ -44,7 +45,7 @@ class SingleNgramEncoder(nn.Module):
             nn.Conv1d(input_dim, hidden_dim, ngram, padding="same"),
             nn.ReLU(),
         )
-        
+
         # Rest stack of 1d-convolutions
         self.transform = mlc(hidden_dim, hidden_dim, ngram, 2, dropout=dropout)
 
@@ -84,54 +85,57 @@ class SegmenterModel(nn.Module):
         dropout=0.0,
     ):
         super().__init__()
-        assert hidden_dim % 2 == 0, f"Hidden dim must be divisible by 2, but is {hidden_dim}"
-        
+        assert (
+            hidden_dim % 2 == 0
+        ), f"Hidden dim must be divisible by 2, but is {hidden_dim}"
+
         # Char embedding matrix
         self.embedding = nn.Embedding(vocabulary_size, embedding_dim, padding_idx=0)
-        
+
         # Convolutional ngram feature extractors
         self.ngram_encoders = [
             SingleNgramEncoder(embedding_dim, hidden_dim, ngram, dropout=dropout)
             for ngram in range(2, max_ngram + 1)
         ]
         self.ngram_encoders = nn.ModuleList(self.ngram_encoders)
-        
+
         # Ngram feature downsampling
         self.ngram_downsample = mlp(
             (max_ngram - 1) * hidden_dim, hidden_dim, 1, dropout=dropout
         )
-        
+
         # BiLSTM for context sensivity
         self.lstm = LSTM(hidden_dim, hidden_dim // 2, num_layers=2, dropout=dropout)
         self.layer_norm = nn.LayerNorm((hidden_dim,))
-        
-        # Classification layer
-        self.predictions =  mlp(hidden_dim, hidden_dim, 1, output_dim=num_classes, dropout=dropout)
 
+        # Classification layer
+        self.predictions = mlp(
+            hidden_dim, hidden_dim, 1, output_dim=num_classes, dropout=dropout
+        )
 
     def forward(self, source):
         # source: shape (batch, #chars)
         lengths = (source != 0).sum(dim=-1).flatten().long()
-        
+
         # Convert char indices -> embeddings
         char_embeddings = self.embedding(source)
         # shape (batch, chars, features)
-        
+
         # Extract ngram features by 1d-convolutions
         ngram_embeddings = [encoder(char_embeddings) for encoder in self.ngram_encoders]
-        
+
         # Combine & downsample
         ngram_embeddings = torch.cat(ngram_embeddings, dim=-1)
         char_embeddings = self.ngram_downsample(ngram_embeddings)
         # shape (batch, #chars, features)
-        
+
         # Run BiLSTM
         transformed = self.lstm(char_embeddings, lengths)
         # Skip connection: Bypass LSTM
         char_embeddings = char_embeddings + transformed
-        # Layer norm: Normalise char features 
+        # Layer norm: Normalise char features
         char_embeddings = self.layer_norm(char_embeddings)
-        
+
         # Predict unnormalised prediction scores
         # -> use Cross Entropy Loss later
         scores = self.predictions(char_embeddings)

@@ -75,7 +75,7 @@ if __name__ == "__main__":
     model = build_model(config, indexer)
     num_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logger.info(f"Model has {num_parameters} trainable parameters")
-    
+
     use_cuda = config["cuda"]
     use_cuda = use_cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
