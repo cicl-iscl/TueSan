@@ -249,7 +249,7 @@ def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
     #     )
     # )
 
-    best_trained_model = build_model(best_trial.config, config, indexer)
+    best_trained_model = build_model(best_trial.config, indexer)
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda:0"
