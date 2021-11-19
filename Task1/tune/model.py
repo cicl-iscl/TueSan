@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 
 from segmenter_model import SegmenterModel
-from classifier import Classifier
 
 
 def build_model(config, indexer):
@@ -13,42 +12,43 @@ def build_model(config, indexer):
     hidden_dim = config["hidden_dim"]
     max_ngram = config["max_ngram"]
     dropout = config["dropout"]
-    mode = config["char2token_mode"]
 
     vocabulary_size = len(indexer.vocabulary)
-    num_sandhi_classes = len(indexer.sandhi_rules) + 1  # Add 1 for padding
-    num_stem_classes = len(indexer.stem_rules) + 1
-    num_tag_classes = len(indexer.tags)
+    num_classes = len(indexer.rules) + 1  # Add 1 for padding
 
-    segmenter = SegmenterModel(
+    return SegmenterModel(
         vocabulary_size,
+        num_classes,
         embedding_dim,
         hidden_dim,
         max_ngram,
-        num_sandhi_classes,
         dropout=dropout,
     )
-
-    classifier = Classifier(
-        hidden_dim,
-        num_stem_classes,
-        num_tag_classes,
-        char2token_mode=mode,
-        dropout=dropout,
-    )
-
-    model = nn.ModuleDict({"segmenter": segmenter, "classifier": classifier})
-    return model
 
 
 def build_optimizer(model, config):
     return torch.optim.SGD(
         model.parameters(),
-        lr=config["lr"],
-        weight_decay=config["weight_decay"],
+        config["lr"],
         momentum=config["momentum"],
         nesterov=config["nesterov"],
+        weight_decay=config["weight_decay"],
     )
+
+
+def build_loss(indexer, rules, device, class_weighting=False):
+    with torch.no_grad():
+        class_weights = torch.zeros(len(rules) + 1, device=device)
+        class_weights.required_grad = False
+
+        for index, rule in indexer.index2rule.items():
+            class_weights[index] = rules[rule]
+
+        class_weights = class_weights / class_weights.sum()
+        class_weights = 1 - class_weights
+
+    criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=0)
+    return criterion
 
 
 def save_model(model, optimizer, vocabulary, char2index, index2char, name):
