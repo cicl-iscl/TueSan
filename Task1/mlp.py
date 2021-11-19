@@ -1,3 +1,18 @@
+"""
+Implements multiple standard neural building blocks that are used in
+various more sophisticated models:
+
+  * MLP (aka multi-layer perceptron)
+    = sequence of Dropout, Linear, elementwise nonlinearity
+  * MLC (aka multi-layer convolution)
+    = sequence of Dropout, 1d-convolution, batch norm, nonlinearity
+  * Residual MLP
+    = like MLP, but add input to output (enforce same dimension)
+  * BiLSTM
+    = mainly wraps packing/unpacking of sequences
+"""
+
+
 import torch
 import torch.nn as nn
 
@@ -8,8 +23,13 @@ import numpy as np
 
 
 def make_linear_transform(in_size, out_size):
+    """
+    Factory for linear transforms:
+      * initialises weights using Xavier normal initialisation
+      * sets biases to 0
+    """
     linear = nn.Linear(in_size, out_size)
-    nn.init.xavier_normal_(linear.weight, gain=np.sqrt(2))
+    nn.init.xavier_normal_(linear.weight)
     nn.init.zeros_(linear.bias)
 
     return linear

@@ -1,29 +1,31 @@
 import json
-import pickle
-
-import torch
-from torch.utils.data import DataLoader
-
-from helpers import load_data
-
-from uni2intern import internal_transliteration_to_unicode as to_uni
-from generate_dataset import construct_train_dataset, construct_eval_dataset
-from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
-from model import build_model, build_optimizer, save_model, load_model, build_loss
-from training import train
-from predicting import make_predictions
-from helpers import save_task1_predictions
-from scoring import evaluate
-
-# from pathlib import Path
 import time
-from logger import logger
+import torch
+import pickle
 import pprint
-
-pp = pprint.PrettyPrinter(indent=4)
-
 import warnings
 
+from logger import logger
+from training import train
+from scoring import evaluate
+from model import save_model
+from model import load_model
+from model import build_loss
+from helpers import load_data
+from model import build_model
+from model import build_optimizer
+from predicting import make_predictions
+from torch.utils.data import DataLoader
+from index_dataset import index_dataset
+from index_dataset import eval_collate_fn
+from index_dataset import train_collate_fn
+from helpers import save_task1_predictions
+from generate_dataset import construct_eval_dataset
+from generate_dataset import construct_train_dataset
+from uni2intern import internal_transliteration_to_unicode as to_uni
+
+
+pp = pprint.PrettyPrinter(indent=4)
 warnings.filterwarnings("ignore")
 
 
@@ -68,9 +70,12 @@ if __name__ == "__main__":
         shuffle=True,
     )
 
-    # # Build model
+    # Build model
     logger.info("Build model")
     model = build_model(config, indexer)
+    num_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    logger.info(f"Model has {num_parameters} trainable parameters")
+    
     use_cuda = config["cuda"]
     use_cuda = use_cuda and torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -78,14 +83,13 @@ if __name__ == "__main__":
 
     model = model.to(device)
 
-    # # Build optimizer
+    # Build optimizer
     optimizer = build_optimizer(model)  # may need config
     criterion = build_loss(indexer, rules, device)
 
     # Train
     logger.info("Train\n")
     epochs = config["epochs"]
-    # criterion = get_loss(config)
     start = time.time()
 
     model, optimizer = train(
