@@ -27,6 +27,7 @@ from uni2intern import internal_transliteration_to_unicode as to_uni
 
 pp = pprint.PrettyPrinter(indent=4)
 warnings.filterwarnings("ignore")
+torch.manual_seed(12345)
 
 
 if __name__ == "__main__":

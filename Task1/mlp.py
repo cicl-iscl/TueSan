@@ -22,6 +22,18 @@ from torch.nn.utils.rnn import pad_packed_sequence
 import numpy as np
 
 
+class ConvLayerNorm(nn.Module):
+    def __init__(self, num_features):
+        super().__init__()
+        self.layer_norm = nn.LayerNorm((num_features,))
+
+    def forward(self, x):
+        x = x.transpose(-1, -2)
+        x = self.layer_norm(x)
+        x = x.transpose(-1, -2)
+        return x
+
+
 def make_linear_transform(in_size, out_size):
     """
     Factory for linear transforms:
@@ -56,6 +68,7 @@ def mlp(input_dim, hidden_dim, num_layers, output_dim=None, dropout=0.0):
         # Nonlinearity only for hidden layers
         if layer < num_layers:
             modules.append(nn.ReLU())
+            # modules.append(nn.LayerNorm((out_size,)))
 
     return nn.Sequential(*modules)
 
@@ -73,8 +86,11 @@ def mlc(input_dim, hidden_dim, filter_size, num_layers, output_dim=None, dropout
 
         modules.append(nn.Dropout(p=dropout))
         modules.append(nn.Conv1d(in_size, out_size, filter_size, padding="same"))
-        modules.append(nn.BatchNorm1d(out_size))
+        modules.append(nn.BatchNorm1d(out_size)),
         modules.append(nn.ReLU())
+
+        # if layer + 1 < num_layers:
+        #    modules.append(ConvLayerNorm(out_size))
 
     return nn.Sequential(*modules)
 

@@ -105,8 +105,9 @@ class SegmenterModel(nn.Module):
         )
 
         # BiLSTM for context sensivity
-        self.lstm = LSTM(hidden_dim, hidden_dim // 2, num_layers=2, dropout=dropout)
-        self.layer_norm = nn.LayerNorm((hidden_dim,))
+        # self.lstm = LSTM(hidden_dim, hidden_dim // 2, num_layers=2, dropout=dropout)
+        self.transform = mlp(hidden_dim, hidden_dim, 2, dropout=dropout)
+        self.char_layer_norm = nn.LayerNorm((hidden_dim,))
 
         # Classification layer
         self.predictions = mlp(
@@ -130,11 +131,12 @@ class SegmenterModel(nn.Module):
         # shape (batch, #chars, features)
 
         # Run BiLSTM
-        transformed = self.lstm(char_embeddings, lengths)
+        # transformed = self.lstm(char_embeddings, lengths)
+        transformed = self.transform(char_embeddings)
         # Skip connection: Bypass LSTM
         char_embeddings = char_embeddings + transformed
         # Layer norm: Normalise char features
-        char_embeddings = self.layer_norm(char_embeddings)
+        char_embeddings = self.char_layer_norm(char_embeddings)
 
         # Predict unnormalised prediction scores
         # -> use Cross Entropy Loss later

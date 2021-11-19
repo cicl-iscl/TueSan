@@ -217,10 +217,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
     # Tuning
     result = tune.run(
-        partial(
-            train_model,
-            checkpoint_dir=config["checkpoint_dir"],
-        ),
+        partial(train_model, checkpoint_dir=config["checkpoint_dir"],),
         resources_per_trial={"cpu": 8, "gpu": gpus_per_trial},
         config=config,  # our search space
         num_samples=num_samples,

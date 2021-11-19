@@ -22,7 +22,7 @@ def train(model, optimizer, criterion, dataloader, epochs, device):
 
     # Train for given number of epochs
     for epoch in range(epochs):
-        batches = tqdm(dataloader, desc=f"Epoch: {epoch}")
+        batches = tqdm(dataloader, desc=f"Epoch: {epoch+1}")
 
         # Iterate over minibatches
         for inputs, labels in batches:
