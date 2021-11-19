@@ -307,6 +307,17 @@ def pred_eval(
     if translit:
         eval_data = convert_eval_if_translit(eval_data)
     scores = evaluate([dp[1] for dp in eval_data], eval_predictions, task_id="t2")
+    # Inspect prediictions...
+    logger.info(f"Example prediction")
+    idx = 0
+
+    logger.info("Input sentence:")
+    logger.debug(eval_data[idx][0])
+
+    logger.info("Predicted:")
+    logger.debug(eval_predictions[idx])
+    logger.info("Gold:")
+    logger.debug(eval_data[idx][1])
 
 
 if __name__ == "__main__":
