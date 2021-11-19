@@ -14,7 +14,8 @@ from ray.tune import CLIReporter
 from ray.tune.schedulers import ASHAScheduler
 
 
-from tqdm import tqdmimport time
+from tqdm import tqdm
+import time
 
 
 def train(model, optimizer, dataloader, epochs, device):

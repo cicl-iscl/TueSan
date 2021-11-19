@@ -190,6 +190,7 @@ def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
     )
 
     # ===================REPETITIVE CODE============================
+    translit = config["translit"]
     # Load data
     logger.info("Load data again...")
     train_data = load_data(config["train_path"], translit)
@@ -267,7 +268,7 @@ def main(num_samples=10, max_num_epochs=25, gpus_per_trial=1):
         indexer,
         device,
         start,
-        translit=False,
+        translit=translit,
     )
 
 
