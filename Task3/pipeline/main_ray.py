@@ -189,8 +189,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     if not test:
         evaluate_coverage(eval_data, stem_rules, logger)
 
-    logger.info("Generate evaluation dataset")
-    eval_data = construct_eval_dataset(eval_data)
+    logger.info("Generate evaluation dataset")  # the same
 
     # Build vocabulary and index the dataset
     indexed_train_data, indexed_eval_data, indexer = index_dataset(
