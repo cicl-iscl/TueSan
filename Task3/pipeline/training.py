@@ -118,7 +118,7 @@ def train(
                     )
                 )
         if tune:
-            os.environ["TUNE_DISABLE_STRICT_METRC_CHECKING"] = 1
+            os.environ["TUNE_DISABLE_STRICT_METRIC_CHECKING"] = 1
             with hyperparameter_tune.checkpoint_dir(epoch) as checkpoint_dir:
                 Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
                 path = Path(checkpoint_dir, "checkpoint")
@@ -128,6 +128,9 @@ def train(
             if (epoch + 1) % 5 == 0:
                 t3_score = evaluate(model)["task_3_tscore"]
                 hyperparameter_tune.report(loss=running_loss, score=t3_score)
+            # if epochs < 5 or (epoch + 1) % 5 == 0:
+            #     t3_score = evaluate(model)["task_3_tscore"]
+            #     hyperparameter_tune.report(loss=running_loss, score=t3_score)
             # else:
             #     hyperparameter_tune.report(loss=100, score=0)
 
