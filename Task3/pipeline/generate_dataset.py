@@ -49,7 +49,7 @@ def construct_train_dataset(data):
     discarded = 0
     stemming_rule_cutoff = 10
 
-    for sandhied, labels in tqdm(data):
+    for sandhied, labels in data:
         unsandhied_tokenized, stems, tags = zip(*labels)
 
         # Extract sandhi rules for each sentence in dataset

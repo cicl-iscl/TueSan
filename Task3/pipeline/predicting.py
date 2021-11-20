@@ -58,7 +58,7 @@ def make_predictions(model, eval_dataloader, indexer, device, translit=False):
     predictions = []
 
     with torch.no_grad():
-        for raw_source, source in tqdm(eval_dataloader):
+        for raw_source, source in eval_dataloader:
             source = source.to(device)
             y_pred_sandhi, char_embeddings = segmenter(source)
             predicted_rules = torch.argmax(y_pred_sandhi, dim=-1)
