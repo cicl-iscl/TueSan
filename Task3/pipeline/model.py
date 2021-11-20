@@ -42,7 +42,7 @@ def build_model(config, indexer):
 
 
 def build_optimizer(model):
-    return torch.optim.SGD(model.parameters(), lr = 0.01)
+    return torch.optim.SGD(model.parameters(), lr=0.01)
 
 
 def save_model(model, optimizer, vocabulary, char2index, index2char, name):

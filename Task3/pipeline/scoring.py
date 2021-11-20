@@ -357,7 +357,7 @@ def evaluate(solution, prediction, task_id):
             "task_3_tscore": avg_task_scores,
         }
 
-    print_scores(scores)
+    # print_scores(scores)
 
     return scores
 
