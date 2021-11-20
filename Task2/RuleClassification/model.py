@@ -58,12 +58,18 @@ def build_model(config, indexer, tag_rules):
 
 
 def build_optimizer(model, config):
-    lr = config["learning_rate"]
-    weight_decay = config.get("weight_decay", 0.01)
+    lr = config["lr"]
+    weight_decay = config["weight_decay"]
+    momentum = config["momentum"]
+    nesterov = config["nesterov"]
 
     # optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     optimizer = torch.optim.SGD(
-        model.parameters(), lr=lr, weight_decay=weight_decay, momentum=0.9
+        model.parameters(),
+        lr=lr,
+        weight_decay=weight_decay,
+        momentum=momentum,
+        nesterov=nesterov,
     )
 
     return optimizer

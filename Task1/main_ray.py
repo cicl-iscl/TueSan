@@ -73,7 +73,7 @@ def pred_eval(
 
 
 def train_model(config, checkpoint_dir=None):
-    data_path = os.path.join(config["cwd"], "temp_train_data.pickle")
+    data_path = os.path.join(config["cwd"], "temp_train_data_task1.pickle")
     with open(data_path, "rb") as tf:
         indexed_train_data, indexed_eval_data, eval_data, rules, indexer = pickle.load(
             tf
@@ -164,7 +164,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     else:
         logger.info("Using raw input")
 
-    train_data = load_data(config["train_path"], translit)[:10000]
+    train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
     test_data = load_task1_test_data(
         Path(config["test_path"], "task_1_input_sentences.tsv"), translit
@@ -193,7 +193,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
     # Pickle datasets
     data_path = os.path.join(config["cwd"], "temp_train_data.pickle")
-    with open("/home/leander/TueSan/Task1/temp_train_data.pickle", "wb") as tf:
+    with open(data_path, "wb") as tf:
         pickle.dump(
             (indexed_train_data, indexed_eval_data, eval_data, rules, indexer), tf
         )

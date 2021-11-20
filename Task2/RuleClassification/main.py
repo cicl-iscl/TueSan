@@ -97,6 +97,8 @@ if __name__ == "__main__":
     # Build model
     logger.info("Build model")
     model = build_model(config, indexer, tag_rules)
+    num_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    logger.info(f"Model has {num_parameters} trainable parameters")
 
     use_cuda = config["cuda"]
     use_cuda = use_cuda and torch.cuda.is_available()
@@ -123,12 +125,7 @@ if __name__ == "__main__":
     logger.info("Saving model")
     name = config["name"]
     save_model(
-        model,
-        optimizer,
-        indexer,
-        stem_rules,
-        tags,
-        name,
+        model, optimizer, indexer, stem_rules, tags, name,
     )
 
     # Prediction
