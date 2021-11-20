@@ -171,7 +171,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     else:
         logger.info("Using raw input")
 
-    train_data = load_data(config["train_path"], translit)[:10000]
+    train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
     test_data = load_task3_test_data(
         Path(config["test_path"], "task_3_input_sentences.tsv"), translit
@@ -296,7 +296,10 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             indexed_test_data.append((raw_source, indexed_source))
 
         test_dataloader = DataLoader(
-            indexed_test_data, batch_size=64, collate_fn=eval_collate_fn, shuffle=False,
+            indexed_test_data,
+            batch_size=64,
+            collate_fn=eval_collate_fn,
+            shuffle=False,
         )
 
         device = "cuda" if torch.cuda.is_available() and config["cuda"] else "cpu"
@@ -304,7 +307,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         predictions = make_predictions(
             model, test_dataloader, indexer, device, translit=translit
         )
-
+        
         # Create submission
         logger.info("Create submission files")
         save_task3_predictions(predictions, duration)
