@@ -36,7 +36,10 @@ if __name__ == "__main__":
     with open("config.cfg") as cfg:
         config = json.load(cfg)
 
+    # Read booleans
     translit = config["translit"]
+    test = config["test"]
+    tune = config["tune"]
 
     # Load data
     logger.info("Load data")
@@ -63,7 +66,8 @@ if __name__ == "__main__":
 
     logger.info("Generate evaluation dataset")
     eval_data = construct_eval_dataset(eval_data)
-    test_data = construct_eval_dataset(test_data)
+    if test:
+        eval_data = construct_eval_dataset(test_data)
 
     # test
     logger.info("Example test data")
@@ -131,8 +135,16 @@ if __name__ == "__main__":
     predictions = make_predictions(
         model, eval_dataloader, indexer, device, translit=translit
     )
-    predictions = [predicted.split(" ") for predicted in predictions]
-    true_unsandhied = [to_uni(unsandhied).split(" ") for _, unsandhied in eval_data]
+    if translit:
+        predictions = [to_uni(predicted).split(" ") for predicted in predictions]
+        if not test:
+            true_unsandhied = [
+                to_uni(unsandhied).split(" ") for _, unsandhied in eval_data
+            ]
+    else:
+        predictions = [predicted.split(" ") for predicted in predictions]
+        if not test:
+            true_unsandhied = [unsandhied.split(" ") for _, unsandhied in eval_data]
 
     # (false) end of prediction
     duration = time.time() - start
@@ -147,12 +159,14 @@ if __name__ == "__main__":
 
     logger.info("Predicted segmentation:")
     logger.debug(predictions[idx])
-    logger.info("Gold segmentation:")
-    logger.debug(true_unsandhied[idx])
+    if not test:
+        logger.info("Gold segmentation:")
+        logger.debug(true_unsandhied[idx])
 
     # Create submission
     logger.info("Create submission files")
     save_task1_predictions(predictions, duration)
 
     # Evaluation
-    scores = evaluate(true_unsandhied, predictions, task_id="t1")
+    if not test:
+        scores = evaluate(true_unsandhied, predictions, task_id="t1")
