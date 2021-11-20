@@ -5,6 +5,7 @@ import pickle
 import pprint
 import warnings
 
+from pathlib import Path
 from logger import logger
 from training import train
 from scoring import evaluate
@@ -17,6 +18,7 @@ from model import build_optimizer
 from predicting import make_predictions
 from torch.utils.data import DataLoader
 from index_dataset import index_dataset
+from helpers import load_task1_test_data
 from index_dataset import eval_collate_fn
 from index_dataset import train_collate_fn
 from helpers import save_task1_predictions
@@ -40,9 +42,17 @@ if __name__ == "__main__":
     logger.info("Load data")
     train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
+    test_data = load_task1_test_data(
+        Path(config["test_path"], "task_1_input_sentences.tsv"), translit
+    )
 
     logger.info(f"Loaded {len(train_data)} train sents")
-    logger.info(f"Loaded {len(eval_data)} test sents")
+    logger.info(f"Loaded {len(eval_data)} eval sents")
+    logger.info(f"Loaded {len(test_data)} test sents")
+
+    # Check test sents
+    # logger.debug(test_data[0])
+    # logger.debug(test_data[-1])
 
     # Generate datasets
     logger.info("Generate training dataset")
