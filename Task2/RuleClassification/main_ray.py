@@ -216,7 +216,16 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             reduction_factor=2,
         )
         reporter = CLIReporter(
-            parameter_columns=["epochs", "lr", "embedding_size", "encoder_max_ngram",],
+            parameter_columns=[
+                "epochs",
+                "embedding_size",
+                "translit",
+                "stemming_rule_cutoff",
+                "tag_rules",
+                "classifier_hidden_dim",
+                "encoder_char2token_mode",
+                "encoder_hidden_size",
+            ],
             metric_columns=[
                 "loss",
                 "score",
@@ -308,4 +317,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     tune = args.tune
-    main(tune, num_samples=4, max_num_epochs=20, gpus_per_trial=1)  # test
+    main(tune, num_samples=30, max_num_epochs=20, gpus_per_trial=1)  # test
