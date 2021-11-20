@@ -73,11 +73,40 @@ def pred_eval(
 
 
 def train_model(config, checkpoint_dir=None):
-    data_path = os.path.join(config["cwd"], "temp_train_data_task1.pickle")
-    with open(data_path, "rb") as tf:
-        indexed_train_data, indexed_eval_data, eval_data, rules, indexer = pickle.load(
-            tf
-        )
+
+    translit = config["translit"]
+    test = config["test"]
+
+    # if translit:
+    #     logger.info("Transliterating input")
+    # else:
+    #     logger.info("Using raw input")
+
+    # Load data
+    logger.info("Load data")
+    train_data = load_data(config["train_path"], translit)
+    eval_data = load_data(config["eval_path"], translit)
+
+    # logger.info(f"Loaded {len(train_data)} train sents")
+    # logger.info(f"Loaded {len(eval_data)} eval sents")
+    # logger.info(f"Loaded {len(test_data)} test sents")
+
+    # Generate datasets
+    logger.info("Generate training dataset")
+    train_data, rules, discarded = construct_train_dataset(train_data)
+    # logger.info(f"Training data contains {len(train_data)} sents")
+    # logger.info(f"Collected {len(rules)} Sandhi rules")
+    # logger.info(f"Discarded {discarded} invalid sents from train data")
+
+    logger.info("Generate evaluation dataset")
+    eval_data = construct_eval_dataset(eval_data)
+
+    # Build vocabulary and index the dataset
+    indexed_train_data, indexed_eval_data, indexer = index_dataset(
+        train_data, eval_data, rules
+    )
+
+    # logger.info(f"{len(indexer.vocabulary)} chars in vocab:\n{indexer.vocabulary}\n")
 
     # Build dataloaders
     # logger.info("Build training dataloader")
@@ -152,51 +181,6 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     logger.info(f"Tune: {tune}")
     config = tune_config if tune else train_config
     config["tune"] = tune
-    config["cwd"] = os.getcwd()
-
-    # Load data
-    logger.info("Load data")
-    translit = config["translit"]
-    test = config["test"]
-
-    if translit:
-        logger.info("Transliterating input")
-    else:
-        logger.info("Using raw input")
-
-    train_data = load_data(config["train_path"], translit)
-    eval_data = load_data(config["eval_path"], translit)
-    test_data = load_task1_test_data(
-        Path(config["test_path"], "task_1_input_sentences.tsv"), translit
-    )
-
-    logger.info(f"Loaded {len(train_data)} train sents")
-    logger.info(f"Loaded {len(eval_data)} eval sents")
-    logger.info(f"Loaded {len(test_data)} test sents")
-
-    # Generate datasets
-    logger.info("Generate training dataset")
-    train_data, rules, discarded = construct_train_dataset(train_data)
-    logger.info(f"Training data contains {len(train_data)} sents")
-    logger.info(f"Collected {len(rules)} Sandhi rules")
-    logger.info(f"Discarded {discarded} invalid sents from train data")
-
-    logger.info("Generate evaluation dataset")
-    eval_data = construct_eval_dataset(eval_data)
-
-    # Build vocabulary and index the dataset
-    indexed_train_data, indexed_eval_data, indexer = index_dataset(
-        train_data, eval_data, rules
-    )
-
-    logger.info(f"{len(indexer.vocabulary)} chars in vocab:\n{indexer.vocabulary}\n")
-
-    # Pickle datasets
-    data_path = os.path.join(config["cwd"], "temp_train_data.pickle")
-    with open(data_path, "wb") as tf:
-        pickle.dump(
-            (indexed_train_data, indexed_eval_data, eval_data, rules, indexer), tf
-        )
 
     start = time.time()
 
@@ -256,6 +240,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         )
         best_trained_model.load_state_dict(model_state)
         model = best_trained_model
+        config = best_trial.config
 
     else:
         model, optimizer = train_model(train_config)
@@ -265,6 +250,48 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     logger.info(f"Duration: {duration:.2f} seconds.\n")
 
     if test:
+
+        # ----------------data loading-------------------
+
+        # Load data
+        logger.info("Load data")
+        translit = config["translit"]
+        test = config["test"]
+
+        # if translit:
+        #     logger.info("Transliterating input")
+        # else:
+        #     logger.info("Using raw input")
+
+        train_data = load_data(config["train_path"], translit)
+        eval_data = load_data(config["eval_path"], translit)
+        test_data = load_task1_test_data(
+            Path(config["test_path"], "task_1_input_sentences.tsv"), translit
+        )
+
+        # logger.info(f"Loaded {len(train_data)} train sents")
+        # logger.info(f"Loaded {len(eval_data)} eval sents")
+        # logger.info(f"Loaded {len(test_data)} test sents")
+
+        # Generate datasets
+        logger.info("Generate training dataset")
+        train_data, rules, discarded = construct_train_dataset(train_data)
+        # logger.info(f"Training data contains {len(train_data)} sents")
+        # logger.info(f"Collected {len(rules)} Sandhi rules")
+        # logger.info(f"Discarded {discarded} invalid sents from train data")
+
+        logger.info("Generate evaluation dataset")
+        eval_data = construct_eval_dataset(eval_data)
+
+        # Build vocabulary and index the dataset
+        indexed_train_data, indexed_eval_data, indexer = index_dataset(
+            train_data, eval_data, rules
+        )
+        # logger.info(
+        #     f"{len(indexer.vocabulary)} chars in vocab:\n{indexer.vocabulary}\n"
+        # )
+        # -----------------------------------------------
+
         logger.info("Creating predictions on test data")
         test_data = [sent for sent, _ in test_data]
         indexed_test_data = list(map(indexer.index_sent, test_data))
@@ -296,5 +323,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     tune = args.tune
-    # main(tune, num_samples=4, max_num_epochs=20, gpus_per_trial=1)  # test
-    main(tune, num_samples=20, max_num_epochs=25, gpus_per_trial=1)
+    main(tune, num_samples=2, max_num_epochs=20, gpus_per_trial=1)  # test
+    # main(tune, num_samples=20, max_num_epochs=25, gpus_per_trial=1)
