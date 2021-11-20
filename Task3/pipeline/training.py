@@ -128,11 +128,6 @@ def train(
             if (epoch + 1) % 5 == 0:
                 t3_score = evaluate(model)["task_3_tscore"]
                 hyperparameter_tune.report(loss=running_loss, score=t3_score)
-            # if epochs < 5 or (epoch + 1) % 5 == 0:
-            #     t3_score = evaluate(model)["task_3_tscore"]
-            #     hyperparameter_tune.report(loss=running_loss, score=t3_score)
-            # else:
-            #     hyperparameter_tune.report(loss=100, score=0)
 
     if not tune:
         return model, optimizer
