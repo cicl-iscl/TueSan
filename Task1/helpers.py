@@ -137,12 +137,13 @@ def save_task1_predictions(list_of_task1_predictions, duration):
 
 
 # Load test data from tsv file
-# Task 1 data is a list of strings ("joint_sentence")
 def load_task1_test_data(file_path, translit=False):
     with open(file_path, encoding="utf-8") as data_file:
         test_tsv = csv.reader(data_file, delimiter="\t")
-        data = [unicodedata.normalize("NFC", line[1]) for line in test_tsv]
+        data = [
+            (unicodedata.normalize("NFC", line[1]), []) for line in test_tsv
+        ]  # add dummy ground truth?
         if translit:
-            data = [to_intern(dp) for dp in data]
+            data = [(to_intern(dp[0]), dp[1]) for dp in data]
 
         return data

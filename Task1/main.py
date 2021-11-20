@@ -63,6 +63,11 @@ if __name__ == "__main__":
 
     logger.info("Generate evaluation dataset")
     eval_data = construct_eval_dataset(eval_data)
+    test_data = construct_eval_dataset(test_data)
+
+    # test
+    logger.info("Example test data")
+    logger.debug(test_data[0])
 
     # Build vocabulary and index the dataset
     indexed_train_data, indexed_eval_data, indexer = index_dataset(
