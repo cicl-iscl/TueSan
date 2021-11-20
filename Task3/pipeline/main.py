@@ -5,6 +5,7 @@ import pprint
 import pickle
 import warnings
 
+from pathlib import Path
 from logger import logger
 from training import train
 from model import load_model
@@ -19,6 +20,7 @@ from index_dataset import index_dataset
 from index_dataset import eval_collate_fn
 from index_dataset import train_collate_fn
 from helpers import save_task3_predictions
+from helpers import load_task3_test_data
 from stemming_rules import evaluate_coverage
 from generate_dataset import construct_train_dataset
 from uni2intern import internal_transliteration_to_unicode as to_uni
@@ -32,15 +34,26 @@ if __name__ == "__main__":
     with open("config.cfg") as cfg:
         config = json.load(cfg)
 
+    # Read booleans
     translit = config["translit"]
+    test = config["test"]
+    tune = config["tune"]
 
     # Load data
     logger.info("Load data")
     train_data = load_data(config["train_path"], translit)
-    eval_data = load_data(config["eval_path"], translit)
+    if not test:
+        eval_data = load_data(config["eval_path"], translit)
+    else:
+        eval_data = load_task3_test_data(
+            Path(config["test_path"], "task_3_input_sentences.tsv"), translit
+        )
 
     logger.info(f"Loaded {len(train_data)} train sents")
     logger.info(f"Loaded {len(eval_data)} test sents")
+
+    logger.debug(eval_data[0])
+    # quit()
 
     # Generate datasets
     logger.info("Generate training dataset")
@@ -53,7 +66,8 @@ if __name__ == "__main__":
     logger.info(f"Collected {len(tags)} morphological tags")
     logger.info(f"Discarded {discarded} invalid sents from train data")
 
-    evaluate_coverage(eval_data, stem_rules, logger)
+    if not test:
+        evaluate_coverage(eval_data, stem_rules, logger)
 
     # logger.info("Stem rules")
     # for (t_pre, t_suf), (s_pre, s_suf) in stem_rules:
@@ -120,6 +134,12 @@ if __name__ == "__main__":
     # predictions = [predicted.split(" ") for predicted in predictions]
     # true_unsandhied = [to_uni(unsandhied).split(" ") for _, unsandhied in eval_data]
 
+    # Check length of predictions
+    logger.info(
+        f"Predicted {len(predictions)} for {len(eval_data)} sentences in test set."
+    )
+    assert len(predictions) == len(eval_data)
+
     # (false) end of prediction
     duration = time.time() - start
     logger.info(f"Duration: {duration:.2f} seconds.\n")
@@ -141,17 +161,17 @@ if __name__ == "__main__":
     save_task3_predictions(predictions, duration)
 
     # Evaluation
-    ground_truth = []
-    if translit:
+    if not test:
         ground_truth = []
-        for _, labels in eval_data:
-            translit_sent = []
-            for token, stem, tag in labels:
-                translit_sent.append([to_uni(token), to_uni(stem), tag])
-            ground_truth.append(translit_sent)
+        if translit:
+            ground_truth = []
+            for _, labels in eval_data:
+                translit_sent = []
+                for token, stem, tag in labels:
+                    translit_sent.append([to_uni(token), to_uni(stem), tag])
+                ground_truth.append(translit_sent)
 
-    else:
-        ground_truth = [labels for _, labels in eval_data]
-        
-    
-    scores = evaluate(ground_truth, predictions, task_id="t3")
+        else:
+            ground_truth = [labels for _, labels in eval_data]
+
+        scores = evaluate(ground_truth, predictions, task_id="t3")
