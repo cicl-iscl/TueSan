@@ -118,7 +118,7 @@ def train(
                     )
                 )
         if tune:
-            os.environ["TUNE_DISABLE_STRICT_METRIC_CHECKING"] = 1
+            os.environ["TUNE_DISABLE_STRICT_METRIC_CHECKING"] = "1"
             with hyperparameter_tune.checkpoint_dir(epoch) as checkpoint_dir:
                 Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
                 path = Path(checkpoint_dir, "checkpoint")
