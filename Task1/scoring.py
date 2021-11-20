@@ -237,7 +237,7 @@ def evaluate(solution, prediction, task_id):
             file=sys.stderr,
         )
 
-    print("Evaluating for task " + task_id)
+    # print("Evaluating for task " + task_id)
     precisions = []
     recalls = []
     accuracies = []
@@ -357,7 +357,7 @@ def evaluate(solution, prediction, task_id):
             "task_3_tscore": avg_task_scores,
         }
 
-    print_scores(scores)
+    # print_scores(scores)
 
     return scores
 

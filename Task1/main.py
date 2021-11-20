@@ -147,7 +147,9 @@ if __name__ == "__main__":
             true_unsandhied = [unsandhied.split(" ") for _, unsandhied in eval_data]
 
     # Check length of predictions
-    logger.info(f"Predicted {len(predictions)} for {len(eval_data)} sentences in test set.")
+    logger.info(
+        f"Predicted {len(predictions)} for {len(eval_data)} sentences in test set."
+    )
     assert len(predictions) == len(eval_data)
 
     # (false) end of prediction

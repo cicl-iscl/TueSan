@@ -1,8 +1,8 @@
 """
-Implements helper function related to creating, loading, and saving the model
+Implements helper function related to creating models, optimizer, and loss
 """
 
-import os
+
 import torch
 import torch.nn as nn
 
@@ -31,8 +31,14 @@ def build_model(config, indexer):
     )
 
 
-def build_optimizer(model):
-    return torch.optim.SGD(model.parameters(), 0.001, weight_decay=0.001)
+def build_optimizer(model, config):
+    return torch.optim.SGD(
+        model.parameters(),
+        config["lr"],
+        momentum=config["momentum"],
+        nesterov=config["nesterov"],
+        weight_decay=config["weight_decay"],
+    )
 
 
 def build_loss(indexer, rules, device, class_weighting=False):
@@ -52,28 +58,3 @@ def build_loss(indexer, rules, device, class_weighting=False):
         criterion = nn.CrossEntropyLoss(ignore_index=0)
 
     return criterion
-
-
-def save_model(model, optimizer, vocabulary, char2index, index2char, name):
-    info = {
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(),
-        "vocabulary": vocabulary,
-        "char2index": char2index,
-        "index2char": index2char,
-    }
-    if not os.path.exists("./saved_models"):
-        os.makedirs("./saved_models")
-
-    path = os.path.join(".", "saved_models", name + ".pt")
-    torch.save(info, path)
-
-
-def load_model(name, config, vocabulary):
-    model = build_model(config, vocabulary)
-    checkpoint = torch.load(os.path.join(".", "saved_models", name + ".pt"))
-    model.load_state_dict(checkpoint["model_state_dict"])
-
-    model.eval()
-
-    return model
