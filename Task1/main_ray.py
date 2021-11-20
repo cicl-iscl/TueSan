@@ -228,9 +228,9 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             num_samples=num_samples,
             scheduler=scheduler,
             progress_reporter=reporter,
-            name="T1_tune",
+            name="T1_tune_test",
             log_to_file=True,
-            fail_fast=True,  # stopping after first failure
+            # fail_fast=True,  # stopping after first failure
             # resume=True
         )
         best_trial = result.get_best_trial("score", "max", "last")
