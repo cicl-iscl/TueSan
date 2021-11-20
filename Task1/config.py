@@ -39,7 +39,7 @@ tune_config = config = {
     "hidden_dim": tune.choice([128, 256, 512]),
     "embedding_dim": tune.choice([32, 64, 128]),
     "name": "test_translit",
-    "translit": True,
+    "translit": tune.choice([True, False]),
     "test": True,
     "train_path": "/data/jingwen/sanskrit/wsmp_train.json",
     "eval_path": "/data/jingwen/sanskrit/corrected_wsmp_dev.json",
