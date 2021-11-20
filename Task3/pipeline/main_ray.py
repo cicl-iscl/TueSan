@@ -200,7 +200,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
     # Pickle datasets
     data_path = os.path.join(config["cwd"], "temp_train_data.pickle")
-    with open("/home/leander/TueSan/Task3/temp_train_data.pickle", "wb") as tf:
+    with open(data_path, "wb") as tf:
         pickle.dump(
             (indexed_train_data, indexed_eval_data, eval_data, rules, indexer), tf
         )
