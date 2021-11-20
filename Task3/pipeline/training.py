@@ -1,7 +1,7 @@
 """
 Implements the training loop
 """
-
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,16 +9,31 @@ import torch.nn.functional as F
 from torch.optim.lr_scheduler import OneCycleLR
 from torch.nn.utils import clip_grad_norm_
 
+from ray import tune as hyperparameter_tune
+
+from pathlib import Path
 from tqdm import tqdm
 import time
 
 
-def train(model, optimizer, dataloader, epochs, device):
+def train(
+    model,
+    optimizer,
+    dataloader,
+    epochs,
+    device,
+    max_lr,
+    evaluate,
+    tune,
+    verbose=False,
+):
     sandhi_criterion = nn.CrossEntropyLoss(ignore_index=0)
     stem_criterion = nn.CrossEntropyLoss(ignore_index=0)
     tag_criterion = nn.CrossEntropyLoss(ignore_index=0)
-    
-    scheduler = OneCycleLR(optimizer, 0.1, epochs = epochs, steps_per_epoch = len(dataloader))
+
+    scheduler = OneCycleLR(
+        optimizer, max_lr=max_lr, epochs=epochs, steps_per_epoch=len(dataloader)
+    )
 
     model = model.to(device)
     segmenter = model["segmenter"]
@@ -34,11 +49,14 @@ def train(model, optimizer, dataloader, epochs, device):
     gamma = 0.95
 
     for epoch in range(epochs):
-        batches = tqdm(dataloader, desc = f"Epoch {epoch+1}")
+        if verbose:
+            batches = tqdm(dataloader, desc=f"Epoch {epoch+1}")
+        else:
+            batches = dataloader
 
         for (source, sandhi_target, stem_target, tag_target, boundaries) in batches:
             optimizer.zero_grad()
-            
+
             sandhi_target = sandhi_target.to(device)
             stem_target = stem_target.to(device)
             tag_target = tag_target.to(device)
@@ -89,15 +107,32 @@ def train(model, optimizer, dataloader, epochs, device):
                     gamma * running_tag_loss + (1 - gamma) * detached_tag_loss
                 )
 
-            batches.set_postfix_str(
-                "Loss: {:.2f}, Sandhi Loss: {:.2f}, Stem Loss: {:.2f}, Tag Loss: {:.2f}, LR: {:.4f}".format(
-                    running_loss,
-                    running_sandhi_loss,
-                    running_stem_loss,
-                    running_tag_loss,
-                    lr
+            if verbose:
+                batches.set_postfix_str(
+                    "Loss: {:.2f}, Sandhi Loss: {:.2f}, Stem Loss: {:.2f}, Tag Loss: {:.2f}, LR: {:.4f}".format(
+                        running_loss,
+                        running_sandhi_loss,
+                        running_stem_loss,
+                        running_tag_loss,
+                        lr,
+                    )
                 )
-            )
-            # time.sleep(0.2)
+        if tune:
+            os.environ["TUNE_DISABLE_STRICT_METRIC_CHECKING"] = 1
+            with hyperparameter_tune.checkpoint_dir(epoch) as checkpoint_dir:
+                Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
+                path = Path(checkpoint_dir, "checkpoint")
+                torch.save((model.state_dict(), optimizer.state_dict()), path)
 
-    return model, optimizer
+            # Evaluate every 5 epochs
+            if (epoch + 1) % 5 == 0:
+                t3_score = evaluate(model)["task_3_tscore"]
+                hyperparameter_tune.report(loss=running_loss, score=t3_score)
+            # if epochs < 5 or (epoch + 1) % 5 == 0:
+            #     t3_score = evaluate(model)["task_3_tscore"]
+            #     hyperparameter_tune.report(loss=running_loss, score=t3_score)
+            # else:
+            #     hyperparameter_tune.report(loss=100, score=0)
+
+    if not tune:
+        return model, optimizer
