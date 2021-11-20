@@ -13,7 +13,7 @@ from ray import tune
 from ray.tune import CLIReporter
 from ray.tune.schedulers import ASHAScheduler
 
-from helpers import load_data
+from helpers import load_data, load_task1_test_data
 from generate_dataset import construct_train_dataset, construct_eval_dataset
 from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
 from model import build_model, build_optimizer, save_model, load_model, build_loss
@@ -41,9 +41,13 @@ def train_model(config, checkpoint_dir=None):
     logger.info("Load data")
     train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
+    test_data = load_task1_test_data(
+        Path(config["eval_path"], "task_1_input_sentences.tsv"), translit
+    )
 
     logger.info(f"Loaded {len(train_data)} train sents")
-    logger.info(f"Loaded {len(eval_data)} test sents")
+    logger.info(f"Loaded {len(eval_data)} eval sents")
+    logger.info(f"Loaded {len(test_data)} test sents")
 
     # Generate datasets
     logger.info("Generate training dataset")
@@ -123,7 +127,7 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     # Test to see if things work as expected
     config = {
         "lr": 0.01,
-        # "batch_size": tune.choice([32, 64, 128]),
+        # "batch_size": tune.choice([16, 32, 64, 128]),
         "batch_size": 64,
         "epochs": tune.choice([1, 2]),
         "momentum": 0,
@@ -137,8 +141,10 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         "translit": True,
         "train_path": "/data/jingwen/sanskrit/wsmp_train.json",
         "eval_path": "/data/jingwen/sanskrit/corrected_wsmp_dev.json",
+        "test_path": "/data/jingwen/sanskrit/test_set",
         "train_graphml": "/data/jingwen/sanskrit/final_graphml_train",
         "eval_graphml": "/data/jingwen/sanskrit/graphml_dev",
+        "test_graphml": "/data/jingwen/sanskrit/test_set/gml_rest",
         "cuda": True,
         "dictionary_path": "/data/jingwen/sanskrit/dictionary.pickle",
         "out_folder": "../sanskrit",
@@ -149,22 +155,24 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     # Define search space
     # config = {
     #     "lr": tune.loguniform(1e-4, 1e-1),
-    #     # "batch_size": tune.choice([32, 64, 128]),
+    #     # "batch_size": tune.choice([16, 32, 64, 128]),
     #     "batch_size": 64,
     #     "epochs": tune.choice([10, 15, 20, 25]),
     #     "momentum": tune.choice([0, 0.9]),
-    #     "nesterov": tune.choice([True, False]),
+    #     "nesterov": False,
     #     "weight_decay": tune.loguniform(1e-4, 1e-1),
     #     "max_ngram": tune.choice([6, 7, 8, 9]),
-    #     "dropout": tune.choice([0, 0.1, 0.2, 0.3]),
+    #     "dropout": tune.choice([0, 0.1, 0.2]),
     #     "hidden_dim": tune.choice([256, 512, 1024]),
     #     "embedding_dim": tune.choice([32, 64, 128, 256]),
     #     "name": "test_translit",
     #     "translit": tune.choice([True, False]),
     #     "train_path": "/data/jingwen/sanskrit/wsmp_train.json",
     #     "eval_path": "/data/jingwen/sanskrit/corrected_wsmp_dev.json",
+    #     "test_path": "/data/jingwen/sanskrit/test_set",
     #     "train_graphml": "/data/jingwen/sanskrit/final_graphml_train",
     #     "eval_graphml": "/data/jingwen/sanskrit/graphml_dev",
+    #     "test_graphml": "/data/jingwen/sanskrit/test_set/gml_rest",
     #     "cuda": True,
     #     "dictionary_path": "/data/jingwen/sanskrit/dictionary.pickle",
     #     "out_folder": "../sanskrit",
@@ -191,6 +199,9 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     logger.info("Load data again...")
     train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
+    test_data = load_task1_test_data(
+        Path(config["eval_path"], "task_1_input_sentences.tsv"), translit
+    )
 
     # Generate datasets
     logger.info("Generate training dataset again...")
@@ -217,7 +228,10 @@ def main(num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
     # Tuning
     result = tune.run(
-        partial(train_model, checkpoint_dir=config["checkpoint_dir"],),
+        partial(
+            train_model,
+            checkpoint_dir=config["checkpoint_dir"],
+        ),
         resources_per_trial={"cpu": 8, "gpu": gpus_per_trial},
         config=config,  # our search space
         num_samples=num_samples,

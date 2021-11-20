@@ -5,6 +5,7 @@ import pickle
 import pprint
 import warnings
 
+from pathlib import Path
 from logger import logger
 from training import train
 from scoring import evaluate
@@ -17,6 +18,7 @@ from model import build_optimizer
 from predicting import make_predictions
 from torch.utils.data import DataLoader
 from index_dataset import index_dataset
+from helpers import load_task1_test_data
 from index_dataset import eval_collate_fn
 from index_dataset import train_collate_fn
 from helpers import save_task1_predictions
@@ -34,15 +36,26 @@ if __name__ == "__main__":
     with open("config.cfg") as cfg:
         config = json.load(cfg)
 
+    # Read booleans
     translit = config["translit"]
+    test = config["test"]
+    tune = config["tune"]
 
     # Load data
     logger.info("Load data")
     train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
+    test_data = load_task1_test_data(
+        Path(config["test_path"], "task_1_input_sentences.tsv"), translit
+    )
 
     logger.info(f"Loaded {len(train_data)} train sents")
-    logger.info(f"Loaded {len(eval_data)} test sents")
+    logger.info(f"Loaded {len(eval_data)} eval sents")
+    logger.info(f"Loaded {len(test_data)} test sents")
+
+    # Check test sents
+    # logger.debug(test_data[0])
+    # logger.debug(test_data[-1])
 
     # Generate datasets
     logger.info("Generate training dataset")
@@ -53,6 +66,12 @@ if __name__ == "__main__":
 
     logger.info("Generate evaluation dataset")
     eval_data = construct_eval_dataset(eval_data)
+    if test:
+        eval_data = construct_eval_dataset(test_data)
+
+    # test
+    logger.info("Example test data")
+    logger.debug(test_data[0])
 
     # Build vocabulary and index the dataset
     indexed_train_data, indexed_eval_data, indexer = index_dataset(
@@ -116,8 +135,20 @@ if __name__ == "__main__":
     predictions = make_predictions(
         model, eval_dataloader, indexer, device, translit=translit
     )
-    predictions = [predicted.split(" ") for predicted in predictions]
-    true_unsandhied = [to_uni(unsandhied).split(" ") for _, unsandhied in eval_data]
+    if translit:
+        predictions = [to_uni(predicted).split(" ") for predicted in predictions]
+        if not test:
+            true_unsandhied = [
+                to_uni(unsandhied).split(" ") for _, unsandhied in eval_data
+            ]
+    else:
+        predictions = [predicted.split(" ") for predicted in predictions]
+        if not test:
+            true_unsandhied = [unsandhied.split(" ") for _, unsandhied in eval_data]
+
+    # Check length of predictions
+    logger.info(f"Predicted {len(predictions)} for {len(eval_data)} sentences in test set.")
+    assert len(predictions) == len(eval_data)
 
     # (false) end of prediction
     duration = time.time() - start
@@ -132,12 +163,14 @@ if __name__ == "__main__":
 
     logger.info("Predicted segmentation:")
     logger.debug(predictions[idx])
-    logger.info("Gold segmentation:")
-    logger.debug(true_unsandhied[idx])
+    if not test:
+        logger.info("Gold segmentation:")
+        logger.debug(true_unsandhied[idx])
 
     # Create submission
     logger.info("Create submission files")
     save_task1_predictions(predictions, duration)
 
     # Evaluation
-    scores = evaluate(true_unsandhied, predictions, task_id="t1")
+    if not test:
+        scores = evaluate(true_unsandhied, predictions, task_id="t1")
