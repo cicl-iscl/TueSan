@@ -41,7 +41,7 @@ def train(model, optimizer, dataloader, epochs, device, tag_rules):
     criterion = nn.CrossEntropyLoss(ignore_index=0)
 
     for epoch in range(epochs):
-        batches = tqdm(dataloader, desc=f"Epoch {epoch}")
+        batches = tqdm(dataloader, desc=f"Epoch {epoch+1}")
 
         for batch in batches:
             optimizer.zero_grad()

@@ -1,4 +1,5 @@
 import os
+import csv
 from pathlib import Path
 import json
 import pickle
@@ -126,3 +127,16 @@ def save_duration(duration, duration_file):
 def save_task3_predictions(list_of_task3_predictions, duration):
     save_predictions(list_of_task3_predictions, "task3_predictions.json")
     save_duration({"duration": duration}, "task3_duration.json")
+
+
+# Load test data from tsv file
+def load_task3_test_data(file_path, translit=False):
+    with open(file_path, encoding="utf-8") as data_file:
+        test_tsv = csv.reader(data_file, delimiter="\t")
+        data = [
+            (unicodedata.normalize("NFC", line[1]), []) for line in test_tsv
+        ]  # add dummy ground truth?
+        if translit:
+            data = [(to_intern(dp[0]), dp[1]) for dp in data]
+
+        return data

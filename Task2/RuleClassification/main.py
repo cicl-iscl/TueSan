@@ -4,6 +4,7 @@ import torch
 import pprint
 import warnings
 
+from pathlib import Path
 from logger import logger
 from training import train
 from scoring import evaluate
@@ -11,10 +12,10 @@ from functools import partial
 from torch.utils.data import DataLoader
 from stemming_rules import evaluate_coverage
 from generate_dataset import construct_train_dataset
-from helpers import load_data, save_task2_predictions
 from model import build_model, build_optimizer, save_model
 from uni2intern import internal_transliteration_to_unicode as to_uni
 from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
+from helpers import load_data, save_task2_predictions, load_task2_test_data
 
 from evaluate import (
     evaluate_model,
@@ -34,15 +35,25 @@ if __name__ == "__main__":
     with open("config.cfg") as cfg:
         config = json.load(cfg)
 
+    # Read booleans
     translit = config["translit"]
+    test = config["test"]
+    tune = config["tune"]
 
     # Load data
     logger.info("Load data")
     train_data = load_data(config["train_path"], translit)
-    eval_data = load_data(config["eval_path"], translit)
+    if not test:
+        eval_data = load_data(config["eval_path"], translit)
+    else:
+        eval_data = load_task2_test_data(
+            Path(config["test_path"], "task_2_input_sentences.tsv"), translit
+        )
 
     logger.info(f"Loaded {len(train_data)} train sents")
     logger.info(f"Loaded {len(eval_data)} test sents")
+
+    # logger.debug(eval_data[0])
 
     # Generate datasets
     logger.info("Generate training dataset")
@@ -61,7 +72,8 @@ if __name__ == "__main__":
     else:
         logger.info("Morphological tags are predicted separately from stems")
 
-    evaluate_coverage(eval_data, stem_rules, logger, tag_rules)
+    if not test:
+        evaluate_coverage(eval_data, stem_rules, logger, tag_rules)
 
     logger.info("Index dataset")
 
@@ -111,10 +123,15 @@ if __name__ == "__main__":
     logger.info("Saving model")
     name = config["name"]
     save_model(
-        model, optimizer, indexer, stem_rules, tags, name,
+        model,
+        optimizer,
+        indexer,
+        stem_rules,
+        tags,
+        name,
     )
 
-    # Evaluate
+    # Prediction
     logger.info("Predicting")
     eval_dataloader = DataLoader(
         indexed_eval_data,
@@ -125,7 +142,6 @@ if __name__ == "__main__":
     eval_predictions = evaluate_model(
         model, eval_dataloader, indexer, device, tag_rules, translit
     )
-    # formatted_predictions = format_predictions(eval_predictions, translit=True)
 
     duration = time.time() - start
     logger.info(f"Duration: {duration:.2f} seconds.\n")
@@ -134,10 +150,11 @@ if __name__ == "__main__":
     logger.info("Create submission files")
     save_task2_predictions(eval_predictions, duration)
 
-    # Evaluate
-    logger.info("Evaluating")
-    # print_metrics(eval_predictions, eval_dataset)
-    # Task 2 Evaluation
-    if translit:
-        eval_data = convert_eval_if_translit(eval_data)
-    scores = evaluate([dp[1] for dp in eval_data], eval_predictions, task_id="t2")
+    # Evaluation
+    if not test:
+        logger.info("Evaluating")
+        # print_metrics(eval_predictions, eval_dataset)
+        # Task 2 Evaluation
+        if translit:
+            eval_data = convert_eval_if_translit(eval_data)
+        scores = evaluate([dp[1] for dp in eval_data], eval_predictions, task_id="t2")

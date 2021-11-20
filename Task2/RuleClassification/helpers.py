@@ -1,7 +1,8 @@
+import os
+import csv
 import json
 import pickle
 import unicodedata
-import os
 from pathlib import Path
 
 from uni2intern import unicode_to_internal_transliteration as to_intern
@@ -117,3 +118,16 @@ def save_duration(duration, duration_file):
 def save_task2_predictions(list_of_task2_predictions, duration):
     save_predictions(list_of_task2_predictions, "task2_predictions.json")
     save_duration({"duration": duration}, "task2_duration.json")
+
+
+# Load test data from tsv file
+def load_task2_test_data(file_path, translit=False):
+    with open(file_path, encoding="utf-8") as data_file:
+        test_tsv = csv.reader(data_file, delimiter="\t")
+        data = [
+            (unicodedata.normalize("NFC", line[1]), []) for line in test_tsv
+        ]  # add dummy ground truth?
+        if translit:
+            data = [(to_intern(dp[0]), dp[1]) for dp in data]
+
+        return data
