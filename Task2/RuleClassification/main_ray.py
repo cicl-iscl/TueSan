@@ -334,4 +334,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     tune = args.tune
-    main(tune, num_samples=3, max_num_epochs=20, gpus_per_trial=1)  # test
+    main(tune, num_samples=30, max_num_epochs=20, gpus_per_trial=1)  # test
