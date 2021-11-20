@@ -23,7 +23,7 @@ from training import train
 from predicting import make_predictions
 from uni2intern import internal_transliteration_to_unicode as to_uni
 from helpers import save_task1_predictions
-from scoring import evaluate
+from scoring import evaluate, print_scores
 
 import pickle
 from config import train_config, tune_config
