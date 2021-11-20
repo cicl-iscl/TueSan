@@ -224,21 +224,10 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         logger.info(f"Best trial config: {best_trial.config}")
         best_loss = best_trial.last_result["loss"]
         logger.info(f"Best trial final validation loss: {best_loss}")
-
-        best_trained_model = build_model(best_trial.config, indexer, tag_rules)
-
+        
+        config = best_trial.config
         with open("best_config_t2.pickle", "wb") as cf:
             pickle.dump(best_trial.config, cf)
-
-        best_trained_model.to(device)
-
-        best_checkpoint_dir = best_trial.checkpoint.value
-        model_state, optimizer_state = torch.load(
-            Path(best_checkpoint_dir, "checkpoint")
-        )
-        best_trained_model.load_state_dict(model_state)
-        model = best_trained_model
-        config = best_trial.config
 
     else:
         model, optimizer = train_model(train_config)
@@ -292,6 +281,17 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         indexed_train_data, indexed_eval_data, indexer = index_dataset(
             train_data, eval_data, stem_rules, tags, tag_rules
         )
+        
+        if tune:
+            best_trained_model = build_model(best_trial.config, indexer, tag_rules)
+            best_trained_model.to(device)
+
+            best_checkpoint_dir = best_trial.checkpoint.value
+            model_state, optimizer_state = torch.load(
+                Path(best_checkpoint_dir, "checkpoint")
+            )
+            best_trained_model.load_state_dict(model_state)
+            model = best_trained_model
         
         logger.info("Evaluating on eval data")
         eval_dataloader = DataLoader(
