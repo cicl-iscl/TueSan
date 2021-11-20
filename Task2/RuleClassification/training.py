@@ -4,12 +4,10 @@ Implements the training loop
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from tqdm import tqdm
 from pathlib import Path
 from functools import partial
-from torch.nn.utils import clip_grad_value_
 from ray import tune as hyperparameter_tune
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -21,18 +19,7 @@ def calculate_running_average(running, loss, gamma):
         return gamma * running + (1 - gamma) * loss
 
 
-def train(
-    model,
-    optimizer,
-    dataloader,
-    epochs,
-    device,
-    tag_rules,
-    max_lr,
-    evaluate,
-    tune,
-    verbose=False,
-):
+def train(model, optimizer, dataloader, epochs, device, tag_rules, max_lr, evaluate, tune, verbose=False):
     encoder = model["encoder"]
     stem_rule_classifier = model["stem_rule_classifier"]
 
@@ -56,7 +43,7 @@ def train(
     for epoch in range(epochs):
         encoder.train()
         stem_rule_classifier.train()
-
+        
         if verbose:
             batches = tqdm(dataloader, desc=f"Epoch {epoch+1}")
         else:
@@ -64,7 +51,6 @@ def train(
 
         for batch in batches:
             optimizer.zero_grad()
-            # loss, (rule_accuracy, tag_accuracy), _ = batch_loss(batch)
 
             if tag_rules:
                 tokens, stem_rules_true = batch
@@ -91,9 +77,6 @@ def train(
             # Train model
             loss = stem_loss + tag_loss
             loss.backward()
-            # Clip gradient values (can make training more stable)
-            # clip_grad_value_(encoder.parameters(), 1.0)
-            # clip_grad_value_(classifiers.parameters(), 10.0)
             optimizer.step()
             scheduler.step()
 
@@ -104,23 +87,19 @@ def train(
 
             running_stem_loss = running_average(running_stem_loss, detached_stem_loss)
             running_tag_loss = running_average(running_tag_loss, detached_tag_loss)
-
+            
             if verbose:
-                batches.set_postfix_str(
-                    "Stem Loss: {:.2f}, Tag Loss: {:.2f}, LR: {:.4f}".format(
-                        running_stem_loss, running_tag_loss, lr
-                    )
-                )
-
+                batches.set_postfix_str("Stem Loss: {:.2f}, Tag Loss: {:.2f}, LR: {:.4f}".format(running_stem_loss, running_tag_loss, lr))
+        
         if tune and ((epoch + 1) % 5 == 0 or epochs < 5):
             with hyperparameter_tune.checkpoint_dir(epoch) as checkpoint_dir:
                 Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
                 path = Path(checkpoint_dir, "checkpoint")
                 torch.save((model.state_dict(), optimizer.state_dict()), path)
-
+            
             t2_score = evaluate(model)["task_2_tscore"]
             running_loss = running_stem_loss + running_tag_loss
             hyperparameter_tune.report(loss=running_loss, score=t2_score)
-
+    
     if not tune:
         return model, optimizer

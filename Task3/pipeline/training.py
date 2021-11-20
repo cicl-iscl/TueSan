@@ -17,15 +17,7 @@ import time
 
 
 def train(
-    model,
-    optimizer,
-    dataloader,
-    epochs,
-    device,
-    max_lr,
-    evaluate,
-    tune,
-    verbose=False,
+    model, optimizer, dataloader, epochs, device, max_lr, evaluate, tune, verbose=False,
 ):
     sandhi_criterion = nn.CrossEntropyLoss(ignore_index=0)
     stem_criterion = nn.CrossEntropyLoss(ignore_index=0)
@@ -117,17 +109,16 @@ def train(
                         lr,
                     )
                 )
-        if tune:
-            os.environ["TUNE_DISABLE_STRICT_METRIC_CHECKING"] = "1"
+        # Evaluate every 5 epochs
+        if tune and ((epoch + 1) % 5 == 0 or epochs < 5):
+            # os.environ["TUNE_DISABLE_STRICT_METRIC_CHECKING"] = "1"
             with hyperparameter_tune.checkpoint_dir(epoch) as checkpoint_dir:
                 Path(checkpoint_dir).mkdir(parents=True, exist_ok=True)
                 path = Path(checkpoint_dir, "checkpoint")
                 torch.save((model.state_dict(), optimizer.state_dict()), path)
 
-            # Evaluate every 5 epochs
-            if (epoch + 1) % 5 == 0:
-                t3_score = evaluate(model)["task_3_tscore"]
-                hyperparameter_tune.report(loss=running_loss, score=t3_score)
+            t3_score = evaluate(model)["task_3_tscore"]
+            hyperparameter_tune.report(loss=running_loss, score=t3_score)
 
     if not tune:
         return model, optimizer

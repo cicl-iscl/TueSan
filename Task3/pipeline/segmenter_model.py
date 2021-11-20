@@ -71,10 +71,11 @@ class SegmenterModel(nn.Module):
         self.ngram_downsample = mlp(
             (max_ngram - 1) * hidden_dim, hidden_dim, 1, dropout=dropout
         )
-        #self.transform = mlp(hidden_dim, hidden_dim, 2, dropout=dropout)
-        self.transform = LSTM(hidden_dim, hidden_dim // 2, num_layers=2, dropout=dropout)
-        
-        
+        # self.transform = mlp(hidden_dim, hidden_dim, 2, dropout=dropout)
+        self.transform = LSTM(
+            hidden_dim, hidden_dim // 2, num_layers=2, dropout=dropout
+        )
+
         self.sandhi_rule_classifier = mlp(
             hidden_dim, hidden_dim, 2, output_dim=num_sandhi_classes, dropout=dropout
         )
@@ -89,7 +90,7 @@ class SegmenterModel(nn.Module):
         ngram_embeddings = torch.cat(ngram_embeddings, dim=-1)
         ngram_embeddings = self.ngram_downsample(ngram_embeddings)
 
-        #transformed = self.transform(ngram_embeddings)
+        # transformed = self.transform(ngram_embeddings)
         transformed = self.transform(ngram_embeddings, lengths)
         ngram_embeddings = ngram_embeddings + transformed
 

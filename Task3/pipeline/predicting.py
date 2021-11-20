@@ -138,7 +138,7 @@ def make_predictions(model, eval_dataloader, indexer, device, translit=False):
                     if translit:
                         token = to_uni(token)
                         current_stem = to_uni(current_stem)
-                    
+
                     sentence_prediction.append([token, current_stem, current_tag])
 
                 predictions.append(sentence_prediction)

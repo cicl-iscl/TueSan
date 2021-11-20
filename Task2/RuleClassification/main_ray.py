@@ -16,30 +16,24 @@ from functools import partial
 from config import tune_config
 from config import train_config
 from ray.tune import CLIReporter
+from scoring import print_scores
+from evaluate import evaluate_model
 from ray import tune as hyperparam_tune
 from torch.utils.data import DataLoader
 from helpers import load_task2_test_data
 from stemming_rules import evaluate_coverage
 from ray.tune.schedulers import ASHAScheduler
+from evaluate import convert_eval_if_translit
 from generate_dataset import construct_train_dataset
 from helpers import load_data, save_task2_predictions
 from model import build_model, build_optimizer, save_model
 from uni2intern import internal_transliteration_to_unicode as to_uni
 from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
 
-from evaluate import (
-    evaluate_model,
-    print_metrics,
-    format_predictions,
-    convert_eval_if_translit,
-)
-
-from scoring import print_scores
-
 # Ignore warning (who cares?)
-
 warnings.filterwarnings("ignore")
 pp = pprint.PrettyPrinter(indent=4)
+torch.manual_seed(12345)
 
 
 def pred_eval(
@@ -120,6 +114,8 @@ def train_model(config, checkpoint_dir=None):
 
     if not tune:
         logger.info(f"Training for {config['epochs']} epochs")
+        num_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        logger.info(f"Model has {num_parameters} trainable parameters")
 
     res = train(
         model,
@@ -154,7 +150,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     else:
         logger.info("Using raw input")
 
-    train_data = load_data(config["train_path"], translit)[:10000]
+    train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
     test_data = load_task2_test_data(
         Path(config["test_path"], "task_2_input_sentences.tsv"), translit

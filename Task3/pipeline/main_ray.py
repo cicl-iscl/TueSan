@@ -289,14 +289,14 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
     if test:
         logger.info("Creating predictions on test data")
-        test_data = [sent for sent, _ in test_data]
-        indexed_test_data = list(map(indexer.index_sent, test_data))
+        # Index test data
+        indexed_test_data = []
+        for raw_source, *_ in test_data:
+            indexed_source = indexer.index_sent(raw_source)
+            indexed_test_data.append((raw_source, indexed_source))
 
         test_dataloader = DataLoader(
-            indexed_test_data,
-            batch_size=64,
-            collate_fn=eval_collate_fn,
-            shuffle=False,
+            indexed_test_data, batch_size=64, collate_fn=eval_collate_fn, shuffle=False,
         )
 
         device = "cuda" if torch.cuda.is_available() and config["cuda"] else "cpu"
@@ -305,6 +305,8 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             model, test_dataloader, indexer, device, translit=translit
         )
 
+        # Create submission
+        logger.info("Create submission files")
         save_task3_predictions(predictions, duration)
 
 
