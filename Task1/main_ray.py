@@ -203,7 +203,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     if tune:
         scheduler = ASHAScheduler(
             metric="score",
-            mode="min",
+            mode="max",
             max_t=max_num_epochs,
             grace_period=1,
             reduction_factor=2,
@@ -233,7 +233,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             fail_fast=True,  # stopping after first failure
             # resume=True
         )
-        best_trial = result.get_best_trial("loss", "min", "last")
+        best_trial = result.get_best_trial("score", "max", "last")
         logger.info("Best trial config: {}".format(best_trial.config))
         logger.info(
             "Best trial final validation loss: {}".format(
@@ -268,7 +268,10 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         indexed_test_data = list(map(indexer.index_sent, test_data))
 
         test_dataloader = DataLoader(
-            indexed_test_data, batch_size=64, collate_fn=eval_collate_fn, shuffle=False,
+            indexed_test_data,
+            batch_size=64,
+            collate_fn=eval_collate_fn,
+            shuffle=False,
         )
 
         device = "cuda" if torch.cuda.is_available() and config["cuda"] else "cpu"
