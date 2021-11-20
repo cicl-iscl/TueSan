@@ -192,7 +192,7 @@ def index_dataset(train_data, eval_data, stem_rules, tags, tag_rules):
 
     # Index train data
     indexed_train_data = []
-    for tokens, stem_target, tag_target in tqdm(train_data):
+    for tokens, stem_target, tag_target in train_data:
         indexed_tokens = list(map(indexer.index_token, tokens))
         indexed_stem_target = indexer.index_stem_rules(stem_target)
         indexed_tag_target = indexer.index_tags(tag_target)

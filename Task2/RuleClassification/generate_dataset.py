@@ -19,7 +19,7 @@ def construct_train_dataset(data, tag_rules, stemming_rule_cutoff):
 
     discarded = 0
 
-    for segmented, labels in tqdm(data):
+    for segmented, labels in data:
         tokens = segmented.split()
 
         try:

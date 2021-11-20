@@ -7,11 +7,11 @@ train_config = {
     "nesterov": False,
     "weight_decay": 0,
     "batch_size": 64,
-    "epochs": 1,
+    "epochs": 10,
     "embedding_dim": 64,
     "hidden_dim": 256,
     "max_ngram": 8,
-    "dropout": 0.1,
+    "dropout": 0.0,
     "char2token_mode": "rnn",
     # ------------------------
     "name": "test_translit",

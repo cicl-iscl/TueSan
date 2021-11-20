@@ -110,7 +110,7 @@ def evaluate_batch(model, batch, indexer, device, tag_rules):
 def evaluate_model(model, eval_dataloader, indexer, device, tag_rules, translit):
     predictions = []
     with torch.no_grad():
-        for batch in tqdm(eval_dataloader):
+        for batch in eval_dataloader:
             batch_predictions = evaluate_batch(model, batch, indexer, device, tag_rules)
             predictions.extend(batch_predictions)
 
