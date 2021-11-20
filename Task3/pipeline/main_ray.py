@@ -18,7 +18,7 @@ from ray.tune.schedulers import ASHAScheduler
 from helpers import load_data, load_task3_test_data
 from generate_dataset import construct_train_dataset
 from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
-from model import build_model, build_optimizer, build_loss
+from model import build_model, build_optimizer
 from training import train
 from predicting import make_predictions
 from uni2intern import internal_transliteration_to_unicode as to_uni
