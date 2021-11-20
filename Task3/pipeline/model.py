@@ -41,5 +41,11 @@ def build_model(config, indexer):
     return model
 
 
-def build_optimizer(model):
-    return torch.optim.SGD(model.parameters(), lr=0.01)
+def build_optimizer(model, config):
+    return torch.optim.SGD(
+        model.parameters(),
+        lr=config["lr"],
+        weight_decay=config["weight_decay"],
+        momentum=config["momentum"],
+        nesterov=config["nesterov"],
+    )
