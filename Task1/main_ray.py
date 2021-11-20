@@ -181,6 +181,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     logger.info(f"Tune: {tune}")
     config = tune_config if tune else train_config
     config["tune"] = tune
+    test = config["test"]
 
     start = time.time()
 
