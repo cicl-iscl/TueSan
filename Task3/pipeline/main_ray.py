@@ -78,9 +78,15 @@ def pred_eval(
 def train_model(config, checkpoint_dir=None):
     data_path = os.path.join(config["cwd"], "temp_train_data.pickle")
     with open(data_path, "rb") as tf:
-        indexed_train_data, indexed_eval_data, eval_data, rules, indexer = pickle.load(
-            tf
-        )
+        (
+            indexed_train_data,
+            indexed_eval_data,
+            eval_data,
+            sandhi_rules,
+            stem_rules,
+            tags,
+            indexer,
+        ) = pickle.load(tf)
 
     # Build dataloaders
     # logger.info("Build training dataloader")
@@ -202,7 +208,16 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     data_path = os.path.join(config["cwd"], "temp_train_data.pickle")
     with open(data_path, "wb") as tf:
         pickle.dump(
-            (indexed_train_data, indexed_eval_data, eval_data, rules, indexer), tf
+            (
+                indexed_train_data,
+                indexed_eval_data,
+                eval_data,
+                sandhi_rules,
+                stem_rules,
+                tags,
+                indexer,
+            ),
+            tf,
         )
 
     start = time.time()
