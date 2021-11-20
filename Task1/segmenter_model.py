@@ -83,11 +83,13 @@ class SegmenterModel(nn.Module):
         hidden_dim,
         max_ngram,
         dropout=0.0,
+        use_lstm=False,
     ):
         super().__init__()
         assert (
             hidden_dim % 2 == 0
         ), f"Hidden dim must be divisible by 2, but is {hidden_dim}"
+        self.use_lstm = use_lstm
 
         # Char embedding matrix
         self.embedding = nn.Embedding(vocabulary_size, embedding_dim, padding_idx=0)
@@ -105,8 +107,10 @@ class SegmenterModel(nn.Module):
         )
 
         # BiLSTM for context sensivity
-        # self.lstm = LSTM(hidden_dim, hidden_dim // 2, num_layers=2, dropout=dropout)
-        self.transform = mlp(hidden_dim, hidden_dim, 2, dropout=dropout)
+        if use_lstm:
+            self.lstm = LSTM(hidden_dim, hidden_dim // 2, num_layers=2, dropout=dropout)
+        else:
+            self.transform = mlp(hidden_dim, hidden_dim, 2, dropout=dropout)
         self.char_layer_norm = nn.LayerNorm((hidden_dim,))
 
         # Classification layer
@@ -131,8 +135,10 @@ class SegmenterModel(nn.Module):
         # shape (batch, #chars, features)
 
         # Run BiLSTM
-        # transformed = self.lstm(char_embeddings, lengths)
-        transformed = self.transform(char_embeddings)
+        if self.use_lstm:
+            transformed = self.lstm(char_embeddings, lengths)
+        else:
+            transformed = self.transform(char_embeddings)
         # Skip connection: Bypass LSTM
         char_embeddings = char_embeddings + transformed
         # Layer norm: Normalise char features

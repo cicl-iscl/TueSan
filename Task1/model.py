@@ -15,6 +15,7 @@ def build_model(config, indexer):
     hidden_dim = config["hidden_dim"]
     max_ngram = config["max_ngram"]
     dropout = config["dropout"]
+    use_lstm = config["use_lstm"]
 
     vocabulary_size = len(indexer.vocabulary)
     num_classes = len(indexer.rules) + 1  # Add 1 for padding
@@ -26,11 +27,12 @@ def build_model(config, indexer):
         hidden_dim,
         max_ngram,
         dropout=dropout,
+        use_lstm=use_lstm,
     )
 
 
 def build_optimizer(model):
-    return torch.optim.SGD(model.parameters(), 0.001)
+    return torch.optim.SGD(model.parameters(), 0.001, weight_decay=0.001)
 
 
 def build_loss(indexer, rules, device, class_weighting=False):
