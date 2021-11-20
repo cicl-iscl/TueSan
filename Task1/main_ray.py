@@ -210,9 +210,11 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         )
         reporter = CLIReporter(
             parameter_columns=[
+                "use_lstm",
+                "translit",
                 "epochs",
-                "lr",
-                "max_ngram",
+                "batch_size",
+                "dropout",
                 "hidden_dim",
                 "embedding_dim",
             ],
