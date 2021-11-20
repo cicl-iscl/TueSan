@@ -151,7 +151,7 @@ if __name__ == "__main__":
     save_task2_predictions(eval_predictions, duration)
 
     # Evaluation
-    if not train:
+    if not test:
         logger.info("Evaluating")
         # print_metrics(eval_predictions, eval_dataset)
         # Task 2 Evaluation
