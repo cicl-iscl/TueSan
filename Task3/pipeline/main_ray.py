@@ -16,7 +16,7 @@ from ray.tune import CLIReporter
 from ray.tune.schedulers import ASHAScheduler
 
 from helpers import load_data, load_task3_test_data
-from generate_dataset import construct_train_dataset, construct_eval_dataset
+from generate_dataset import construct_train_dataset
 from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
 from model import build_model, build_optimizer, build_loss
 from training import train
