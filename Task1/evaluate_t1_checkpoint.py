@@ -195,6 +195,7 @@ def evaluate_checkpoint(config, checkpoint, checkpoint_dir=None):
 
 
 if __name__ == "__main__":
+    checkpoint = "DEFAULT_36a06_00009_9_batch_size=16,dropout=0.0,embedding_dim=128,epochs=20,hidden_dim=512,translit=True,use_lstm=True_2021-11-21_00-05-10/checkpoint_000015/checkpoint"
     evaluate_checkpoint(
-        config, checkpoint="some name", checkpoint_dir="~/ray_results/T1_tune"
+        config, checkpoint=checkpoint, checkpoint_dir="~/ray_results/T1_tune"
     )
