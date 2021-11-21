@@ -129,11 +129,10 @@ def train_model(config, checkpoint_dir=None):
     optimizer = build_optimizer(model, config)
 
     if checkpoint_dir is not None:
-        model_state, optimizer_state = torch.load(
-            Path(checkpoint_dir, "checkpoint").mkdir(parents=True, exist_ok=True)
-        )
+        model_state, optimizer_state = torch.load(os.path.join(checkpoint_dir, "checkpoint"), map_location=device)
         model.load_state_dict(model_state)
         optimizer.load_state_dict(optimizer_state)
+        res = model, optimizer
 
     # Train
     epochs = config["epochs"]
@@ -153,18 +152,19 @@ def train_model(config, checkpoint_dir=None):
         num_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
         logger.info(f"Model has {num_parameters} trainable parameters")
 
-    res = train(
-        model,
-        optimizer,
-        train_dataloader,
-        epochs,
-        device,
-        tag_rules,
-        config["lr"],
-        evaluator,
-        tune=tune,
-        verbose=not config["tune"],
-    )
+    if tune or checkpoint_dir is None:
+        res = train(
+            model,
+            optimizer,
+            train_dataloader,
+            epochs,
+            device,
+            tag_rules,
+            config["lr"],
+            evaluator,
+            tune=tune,
+            verbose=not config["tune"],
+        )
 
     if not tune:
         return res
@@ -214,13 +214,13 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             num_samples=num_samples,
             scheduler=scheduler,
             progress_reporter=reporter,
-            name="T1_tune",
+            name="T2_tune",
             log_to_file=True,
             fail_fast=True,  # stopping after first failure
             # resume=True,
         )
 
-        best_trial = result.get_best_trial("loss", "max", "last")
+        best_trial = result.get_best_trial("score", "max", "last")
         logger.info(f"Best trial config: {best_trial.config}")
         best_loss = best_trial.last_result["loss"]
         logger.info(f"Best trial final validation loss: {best_loss}")
@@ -230,7 +230,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             pickle.dump(best_trial.config, cf)
 
     else:
-        model, optimizer = train_model(train_config)
+        model, optimizer = train_model(train_config, train_config['checkpoint_dir'])
     
     duration = time.time() - start
 
