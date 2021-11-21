@@ -45,6 +45,9 @@ def train(
             batches = tqdm(dataloader, desc=f"Epoch {epoch+1}")
         else:
             batches = dataloader
+        
+        segmenter.train()
+        classifier.train()
 
         for (source, sandhi_target, stem_target, tag_target, boundaries) in batches:
             optimizer.zero_grad()
@@ -66,14 +69,14 @@ def train(
             stem_loss = stem_criterion(y_pred_stem, stem_target)
             tag_loss = tag_criterion(y_pred_tag, tag_target)
             loss = sandhi_loss + stem_loss + tag_loss
+            
+            if torch.isnan(loss):
+                continue
 
             loss.backward()
             # clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             scheduler.step()
-
-            if torch.isnan(loss):
-                raise ValueError
 
             detached_loss = loss.detach().cpu().item()
             detached_sandhi_loss = sandhi_loss.detach().cpu().item()
