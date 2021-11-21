@@ -23,7 +23,7 @@ from training import train
 from predicting import make_predictions
 from uni2intern import internal_transliteration_to_unicode as to_uni
 from helpers import save_task1_predictions
-from scoring import evaluate
+from scoring import evaluate, print_scores
 
 import pickle
 from config import train_config, tune_config
@@ -181,6 +181,7 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
     logger.info(f"Tune: {tune}")
     config = tune_config if tune else train_config
     config["tune"] = tune
+    test = config["test"]
 
     start = time.time()
 
@@ -350,5 +351,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     tune = args.tune
-    main(tune, num_samples=2, max_num_epochs=20, gpus_per_trial=1)  # test
-    # main(tune, num_samples=20, max_num_epochs=25, gpus_per_trial=1)
+    # main(tune, num_samples=2, max_num_epochs=20, gpus_per_trial=1)  # test
+    main(tune, num_samples=20, max_num_epochs=25, gpus_per_trial=1)
