@@ -172,3 +172,9 @@ def evaluate_checkpoint(config, checkpoint, checkpoint_dir=None):
         # Create submission
         logger.info("Create submission files")
         save_task2_predictions(predictions, duration)
+
+
+if __name__ == "__main__":
+    evaluate_checkpoint(
+        config, checkpoint="some name", checkpoint_dir="~/ray_results/T2_tune"
+    )
