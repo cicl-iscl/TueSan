@@ -41,7 +41,13 @@ torch.manual_seed(12345)
 
 
 def pred_eval(
-    model, eval_data, eval_dataloader, indexer, device, translit=False, verbose=False
+    model,
+    eval_data,
+    eval_dataloader,
+    indexer,
+    device,
+    translit=False,
+    verbose=False,
 ):
     predictions = make_predictions(
         model, eval_dataloader, indexer, device, translit=translit
@@ -98,9 +104,13 @@ def train_model(config, checkpoint_dir=None):
 
     # Generate datasets
     # logger.info("Generate training dataset")
-    train_data, sandhi_rules, stem_rules, tags, discarded = construct_train_dataset(
-        train_data
-    )
+    (
+        train_data,
+        sandhi_rules,
+        stem_rules,
+        tags,
+        discarded,
+    ) = construct_train_dataset(train_data)
     # logger.info(f"Training data contains {len(train_data)} sents")
     # logger.info(f"Collected {len(sandhi_rules)} Sandhi rules")
     # logger.info(f"Collected {len(stem_rules)} Stemming rules")
@@ -149,7 +159,9 @@ def train_model(config, checkpoint_dir=None):
 
     if checkpoint_dir is not None:
         model_state, optimizer_state = torch.load(
-            Path(checkpoint_dir, "checkpoint").mkdir(parents=True, exist_ok=True)
+            Path(checkpoint_dir, "checkpoint").mkdir(
+                parents=True, exist_ok=True
+            )
         )
         model.load_state_dict(model_state)
         optimizer.load_state_dict(optimizer_state)
@@ -204,12 +216,10 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         )
         reporter = CLIReporter(
             parameter_columns=[
-                "epochs",
                 "translit",
                 "batch_size",
                 "dropout",
                 "hidden_dim",
-                "embedding_dim",
                 "char2token_mode",
             ],
             metric_columns=["loss", "score", "training_iteration"],
@@ -237,7 +247,9 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             )
         )
         logger.info(
-            "Best trial final task score: {}".format(best_trial.last_result["score"])
+            "Best trial final task score: {}".format(
+                best_trial.last_result["score"]
+            )
         )
 
         config = best_trial.config
@@ -263,9 +275,13 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         )
 
         # Generate datasets
-        train_data, sandhi_rules, stem_rules, tags, discarded = construct_train_dataset(
-            train_data
-        )
+        (
+            train_data,
+            sandhi_rules,
+            stem_rules,
+            tags,
+            discarded,
+        ) = construct_train_dataset(train_data)
 
         # Build vocabulary and index the dataset
         indexed_train_data, indexed_eval_data, indexer = index_dataset(
@@ -291,7 +307,12 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             shuffle=False,
         )
         scores = pred_eval(
-            model, eval_data, eval_dataloader, indexer, device, translit=translit
+            model,
+            eval_data,
+            eval_dataloader,
+            indexer,
+            device,
+            translit=translit,
         )
         print_scores(scores)
 
@@ -309,7 +330,9 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             shuffle=False,
         )
 
-        device = "cuda" if torch.cuda.is_available() and config["cuda"] else "cpu"
+        device = (
+            "cuda" if torch.cuda.is_available() and config["cuda"] else "cpu"
+        )
 
         predictions = make_predictions(
             model, test_dataloader, indexer, device, translit=translit
@@ -329,4 +352,4 @@ if __name__ == "__main__":
 
     tune = args.tune
     # main(tune, num_samples=1, max_num_epochs=20, gpus_per_trial=1)  # test
-    main(tune, num_samples=30, max_num_epochs=25, gpus_per_trial=0.5)
+    main(tune, num_samples=20, max_num_epochs=15, gpus_per_trial=0.5)
