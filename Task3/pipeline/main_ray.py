@@ -58,7 +58,7 @@ def pred_eval(
 
     # ----- Example prediction -------
     if verbose:
-        logger.info(f"Example prediction")
+        logger.info("Example prediction")
         idx = 0
 
         logger.info("Input sentence:")
