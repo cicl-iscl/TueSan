@@ -128,7 +128,7 @@ def evaluate_checkpoint(config, checkpoint, checkpoint_dir=None):
     )
 
     # Read best config
-    with open("best_config_t2.pickle", "rb") as cf:
+    with open("best_config_t1.pickle", "rb") as cf:
         best_config = pickle.load(best_trial.config, cf)
 
     # Build model
