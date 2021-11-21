@@ -329,4 +329,4 @@ if __name__ == "__main__":
 
     tune = args.tune
     # main(tune, num_samples=1, max_num_epochs=20, gpus_per_trial=1)  # test
-    main(num_samples=30, max_num_epochs=25, gpus_per_trial=0.5)
+    main(tune, num_samples=30, max_num_epochs=25, gpus_per_trial=0.5)
