@@ -199,5 +199,5 @@ if __name__ == "__main__":
     evaluate_checkpoint(
         train_config,
         checkpoint=checkpoint,
-        checkpoint_dir="~/ray_results/T1_tune",
+        checkpoint_dir="~/ray_results/T1_tune_test",
     )
