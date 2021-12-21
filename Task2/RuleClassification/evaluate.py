@@ -162,3 +162,41 @@ def convert_eval_if_translit(eval_data):
     for dp in eval_data:
         converted.append((dp[0], [(to_uni(x), y) for x, y in dp[1]]))
     return converted
+
+
+def wrong_predictions(predictions, ground_truth, predicted_rules, candidates):
+    tags_true, tags_pred, stems_true, stems_pred = [], [], [], []
+    assert len(predictions) == len(ground_truth)
+    assert len(predictions) == len(predicted_rules)
+
+    with open("wrong_predictions.txt", "w", encoding="utf-8") as f:
+        for y_true, y_pred, pred_rule, candidate_list in zip(
+            ground_truth, predictions, predicted_rules, candidates
+        ):
+            tokens, stems, tags, rules = zip(*y_true)
+            assert len(tags) == len(y_pred[0])
+
+            tags_true.extend(tags)
+            tags_pred.extend(y_pred[0])
+
+            stems_true.extend(stems)
+            stems_pred.extend(y_pred[1])
+
+            for i, tag in enumerate(tags):
+                if tag != y_pred[0][i] or stems[i] != y_pred[1][i]:
+                    f.write(f"\nPred: {y_pred[0][i]}\t{y_pred[1][i]}\n")
+                    f.write(f"True: {tag}\t{stems[i]}\n")
+                    f.write(f"CandRules: {candidate_list[i]}\n")
+                    f.write(f"PredRule: {pred_rule[i]}\n")
+                    f.write(f"TrueRule: {rules[i]}\n")
+                    if rules[i] in candidate_list[i]:
+                        f.write("True rule in candidates.\n")
+                    else:
+                        f.write("Not in candidates.\n")
+                elif tag == y_pred[0][i] and pred_rule[i] != rules[i]:
+                    f.write(f"\nWrong rule selected but correct tag prediction.\n")
+                    f.write(f"Pred: {y_pred[0][i]}\t{y_pred[1][i]}\n")
+                    f.write(f"True: {tag}\t{stems[i]}\n")
+                    f.write(f"CandRules: {candidate_list[i]}\n")
+                    f.write(f"PredRule: {pred_rule[i]}\n")
+                    f.write(f"TrueRule: {rules[i]}\n")

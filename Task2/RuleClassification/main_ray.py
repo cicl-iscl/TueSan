@@ -49,58 +49,63 @@ def pred_eval(
         eval_data = convert_eval_if_translit(eval_data)
 
     scores = evaluate([dp[1] for dp in eval_data], eval_predictions, task_id="t2")
+
+    # Examine wrong predictions
+    print("\nWrite wrong predictions to file")
+    wrong_predictions(eval_predictions, eval_dataset, predicted_rules, candidates)
+
     return scores
 
 
 def train_model(config, checkpoint_dir=None):
     # Load data
-    #logger.info("Load data")
+    # logger.info("Load data")
     translit = config["translit"]
     test = config["test"]
 
-    #if translit:
+    # if translit:
     #    logger.info("Transliterating input")
-    #else:
+    # else:
     #    logger.info("Using raw input")
 
     train_data = load_data(config["train_path"], translit)
     eval_data = load_data(config["eval_path"], translit)
-    #test_data = load_task2_test_data(
+    # test_data = load_task2_test_data(
     #    Path(config["test_path"], "task_2_input_sentences.tsv"), translit
-    #)
+    # )
 
-    #logger.info(f"Loaded {len(train_data)} train sents")
-    #logger.info(f"Loaded {len(eval_data)} test sents")
-    #logger.info(f"Loaded {len(test_data)} test sents")
+    # logger.info(f"Loaded {len(train_data)} train sents")
+    # logger.info(f"Loaded {len(eval_data)} test sents")
+    # logger.info(f"Loaded {len(test_data)} test sents")
 
     # Generate datasets
-    #logger.info("Generate training dataset")
+    # logger.info("Generate training dataset")
     tag_rules = config["tag_rules"]
     stemming_rule_cutoff = config["stemming_rule_cutoff"]
     train_data, stem_rules, tags, discarded = construct_train_dataset(
         train_data, tag_rules, stemming_rule_cutoff
     )
-    #logger.info(f"Training data contains {len(train_data)} sents")
-    #logger.info(f"Discarded {discarded} invalid sents from train data")
-    #logger.info(f"Collected {len(stem_rules)} Stemming rules")
-    #logger.info(f"Collected {len(tags)} morphological tags")
+    # logger.info(f"Training data contains {len(train_data)} sents")
+    # logger.info(f"Discarded {discarded} invalid sents from train data")
+    # logger.info(f"Collected {len(stem_rules)} Stemming rules")
+    # logger.info(f"Collected {len(tags)} morphological tags")
 
-    #if tag_rules:
+    # if tag_rules:
     #    logger.info("Stemming rules contain morphological tag")
-    #else:
+    # else:
     #    logger.info("Morphological tags are predicted separately from stems")
 
-    #if not test:
+    # if not test:
     #    evaluate_coverage(eval_data, stem_rules, logger, tag_rules)
 
-    #logger.info("Index dataset")
+    # logger.info("Index dataset")
 
     # Build vocabulary and index the dataset
     indexed_train_data, indexed_eval_data, indexer = index_dataset(
         train_data, eval_data, stem_rules, tags, tag_rules
     )
 
-    #logger.info(f"{len(indexer.vocabulary)} chars in vocab:\n{indexer.vocabulary}\n")
+    # logger.info(f"{len(indexer.vocabulary)} chars in vocab:\n{indexer.vocabulary}\n")
 
     # Build dataloaders
     batch_size = config["batch_size"]
@@ -129,7 +134,9 @@ def train_model(config, checkpoint_dir=None):
     optimizer = build_optimizer(model, config)
 
     if checkpoint_dir is not None:
-        model_state, optimizer_state = torch.load(os.path.join(checkpoint_dir, "checkpoint"), map_location=device)
+        model_state, optimizer_state = torch.load(
+            os.path.join(checkpoint_dir, "checkpoint"), map_location=device
+        )
         model.load_state_dict(model_state)
         optimizer.load_state_dict(optimizer_state)
         res = model, optimizer
@@ -208,7 +215,10 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
         # Tuning
         result = hyperparam_tune.run(
-            partial(train_model, checkpoint_dir=config["checkpoint_dir"],),
+            partial(
+                train_model,
+                checkpoint_dir=config["checkpoint_dir"],
+            ),
             resources_per_trial={"cpu": 8, "gpu": gpus_per_trial},
             config=config,  # our search space
             num_samples=num_samples,
@@ -224,25 +234,25 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
         logger.info(f"Best trial config: {best_trial.config}")
         best_loss = best_trial.last_result["loss"]
         logger.info(f"Best trial final validation loss: {best_loss}")
-        
+
         config = best_trial.config
         with open("best_config_t2.pickle", "wb") as cf:
             pickle.dump(best_trial.config, cf)
 
     else:
-        model, optimizer = train_model(train_config, train_config['checkpoint_dir'])
-    
+        model, optimizer = train_model(train_config, train_config["checkpoint_dir"])
+
     duration = time.time() - start
 
     if test:
         # Load data
-        #logger.info("Load data")
+        # logger.info("Load data")
         translit = config["translit"]
         test = config["test"]
 
-        #if translit:
+        # if translit:
         #    logger.info("Transliterating input")
-        #else:
+        # else:
         #    logger.info("Using raw input")
 
         train_data = load_data(config["train_path"], translit)
@@ -251,37 +261,37 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             Path(config["test_path"], "task_2_input_sentences.tsv"), translit
         )
 
-        #logger.info(f"Loaded {len(train_data)} train sents")
-        #logger.info(f"Loaded {len(eval_data)} test sents")
-        #logger.info(f"Loaded {len(test_data)} test sents")
+        # logger.info(f"Loaded {len(train_data)} train sents")
+        # logger.info(f"Loaded {len(eval_data)} test sents")
+        # logger.info(f"Loaded {len(test_data)} test sents")
 
         # Generate datasets
-        #logger.info("Generate training dataset")
+        # logger.info("Generate training dataset")
         tag_rules = config["tag_rules"]
         stemming_rule_cutoff = config["stemming_rule_cutoff"]
         train_data, stem_rules, tags, discarded = construct_train_dataset(
             train_data, tag_rules, stemming_rule_cutoff
         )
-        #logger.info(f"Training data contains {len(train_data)} sents")
-        #logger.info(f"Discarded {discarded} invalid sents from train data")
-        #logger.info(f"Collected {len(stem_rules)} Stemming rules")
-        #logger.info(f"Collected {len(tags)} morphological tags")
+        # logger.info(f"Training data contains {len(train_data)} sents")
+        # logger.info(f"Discarded {discarded} invalid sents from train data")
+        # logger.info(f"Collected {len(stem_rules)} Stemming rules")
+        # logger.info(f"Collected {len(tags)} morphological tags")
 
-        #if tag_rules:
+        # if tag_rules:
         #    logger.info("Stemming rules contain morphological tag")
-        #else:
+        # else:
         #    logger.info("Morphological tags are predicted separately from stems")
 
-        #if not test:
+        # if not test:
         #    evaluate_coverage(eval_data, stem_rules, logger, tag_rules)
 
-        #logger.info("Index dataset")
+        # logger.info("Index dataset")
 
         # Build vocabulary and index the dataset
         indexed_train_data, indexed_eval_data, indexer = index_dataset(
             train_data, eval_data, stem_rules, tags, tag_rules
         )
-        
+
         if tune:
             best_trained_model = build_model(best_trial.config, indexer, tag_rules)
             best_trained_model.to(device)
@@ -292,17 +302,20 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             )
             best_trained_model.load_state_dict(model_state)
             model = best_trained_model
-        
+
         logger.info("Evaluating on eval data")
         eval_dataloader = DataLoader(
-            indexed_eval_data, batch_size=64, collate_fn=eval_collate_fn, shuffle=False,
+            indexed_eval_data,
+            batch_size=64,
+            collate_fn=eval_collate_fn,
+            shuffle=False,
         )
 
         scores = pred_eval(
             model, eval_data, eval_dataloader, indexer, device, tag_rules, translit
         )
         print_scores(scores)
-        
+
         logger.info("Creating predictions on test data")
         # Index test data
         indexed_test_data = []
@@ -313,7 +326,10 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
 
         # Create dataloader
         test_dataloader = DataLoader(
-            indexed_test_data, batch_size=64, collate_fn=eval_collate_fn, shuffle=False,
+            indexed_test_data,
+            batch_size=64,
+            collate_fn=eval_collate_fn,
+            shuffle=False,
         )
 
         # Get predictions
