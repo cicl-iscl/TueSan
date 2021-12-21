@@ -18,6 +18,7 @@ from config import train_config
 from ray.tune import CLIReporter
 from scoring import print_scores
 from evaluate import evaluate_model
+from evaluate import wrong_predictions
 from ray import tune as hyperparam_tune
 from torch.utils.data import DataLoader
 from helpers import load_task2_test_data

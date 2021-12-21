@@ -20,7 +20,7 @@ from generate_dataset import construct_train_dataset, construct_eval_dataset
 from index_dataset import index_dataset, train_collate_fn, eval_collate_fn
 from model import build_model, build_optimizer, build_loss
 from training import train
-from predicting import make_predictions
+from predicting import make_predictions, wrong_predictions, output_wrong_predictions
 from uni2intern import internal_transliteration_to_unicode as to_uni
 from helpers import save_task1_predictions
 from scoring import evaluate, print_scores
