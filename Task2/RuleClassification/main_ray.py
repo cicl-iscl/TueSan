@@ -241,7 +241,8 @@ def main(tune, num_samples=10, max_num_epochs=20, gpus_per_trial=1):
             pickle.dump(best_trial.config, cf)
 
     else:
-        model, optimizer = train_model(train_config, train_config["checkpoint_dir"])
+        # model, optimizer = train_model(train_config, train_config["checkpoint_dir"])
+        model, optimizer = train_model(train_config)
 
     duration = time.time() - start
 
