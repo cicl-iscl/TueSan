@@ -69,6 +69,13 @@ def pred_eval(
 
     # Evaluation
     scores = evaluate(true_unsandhied, predictions, task_id="t1")
+
+    # Check predictions
+    _, wrong, rules_used = wrong_predictions(
+        model, eval_dataloader, indexer, device, true_unsandhied, translit=translit
+    )
+    output_wrong_predictions(wrong, rules_used)
+
     return scores
 
 
